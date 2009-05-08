@@ -15,32 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import getopt, logging.config, os, sys, wikitools.importer, wikitools.repository
+import getopt, logging.config, os, sys, wikitools.repository, wikitools.analysis
 
 logging.config.fileConfig(os.path.dirname(sys.argv[0]) + os.sep + 'logging.conf')
 
 def usage():
 	print 'Usage:'
-	print '  %s [-H <host>] [-P <port>] -d <database> -u <user> [-p <password>] [-i <importDir>]' % sys.argv[0]
-	print '  %s [--host=<host>] [--port=<port>] --database=<database> --user=<user> [--password=<password>] [--import-dir=<importDir>]' % sys.argv[0]
+	print '  %s [-H <host>] [-P <port>] -d <database> -u <user> [-p <password>]' % sys.argv[0]
+	print '  %s [--host=<host>] [--port=<port>] --database=<database> --user=<user> [--password=<password>]' % sys.argv[0]
 	print '  %s -h' % sys.argv[0]
 	print '  %s --help' % sys.argv[0]
 	sys.exit(0)
 
-optlist, args = getopt.getopt(sys.argv[1:], 'H:P:d:u:p:i:h', ['host=', 'port=', 'database=', 'user=', 'password=', 'import-dir=', 'help'])
-(host, port, database, user, password, importDir) = (None, None, None, None, None, '.')
+optlist, args = getopt.getopt(sys.argv[1:], 'H:P:d:u:p:h', ['host=', 'port=', 'database=', 'user=', 'password=', 'help'])
+(host, port, database, user, password, inputDir) = (None, None, None, None, None, '.')
 for opt, arg in optlist:
 	if opt in ('-H', '--host'): host = arg
 	if opt in ('-P', '--port'): port = arg
 	if opt in ('-d', '--database'): database = arg
 	if opt in ('-u', '--user'): user = arg
 	if opt in ('-p', '--password'): password = arg
-	if opt in ('-i', '--import-dir'): importDir = arg
 	if opt in ('-h', '--help'): usage()
 if not database or not user: usage()
 
-dataSource = wikitools.importer.DumpsDataSource(importDir)
 dataRepository = wikitools.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
-importer = wikitools.importer.Importer(dataSource, dataRepository)
-
-importer.doImport()
+pagePositionCalculator = wikitools.analysis.PagePositionCalculator(dataRepository)
+pagePositionCalculator.doCalculate()

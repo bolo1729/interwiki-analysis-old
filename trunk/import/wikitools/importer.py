@@ -14,13 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gzip, logging, os, re, sys, uuid
-
-NAMESPACES = (0, 14)
+import gzip, logging, os, re, sys
 
 class Importer:
+	NAMESPACES = (0, 14)
+
 	def __init__(self, dataSource = None, dataRepository = None):
 		self.log = logging.getLogger('Importer')
+		# self.logValidator = logging.getLogger('DataValidator')
 		self.dataSource = dataSource
 		self.dataRepository = dataRepository
 
@@ -30,7 +31,7 @@ class Importer:
 			namespace = record[1]
 			title = record[2]
 
-			if not int(namespace) in NAMESPACES:
+			if not int(namespace) in self.NAMESPACES:
 				continue
 			self.dataRepository.insertPage(lang, id, namespace, title)
 
@@ -40,20 +41,22 @@ class Importer:
 			toNamespace = record[1]
 			toTitle = record[2]
 
-			if not int(toNamespace) in NAMESPACES:
+			if not int(toNamespace) in self.NAMESPACES:
 				continue
 
 			page = self.dataRepository.getPage(lang + ':' + fromId)
 			if page == None:
+				# self.logValidator.warn('Nonexistent redirect source [%s] (language %s)' % (fromId, lang))
 				continue
 			fromNamespace = page['namespace']
 
 			if int(fromNamespace) != int(toNamespace):
+				# self.logValidator.warn('Redirect to a different namespace from %s:%s (%s to %s)' % (page['lang'], page['title'], fromNamespace, toNamespace))
 				continue
 
 			toKey = self.dataRepository.getPageKey(lang, toNamespace, toTitle)
 			if toKey == None:
-				# self.log.warn('Nonexistent target %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
+				# self.logValidator.warn('Nonexistent redirect target %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
 				continue
 
 			self.dataRepository.insertRedirect(lang + ':' + fromId, toKey)
@@ -65,10 +68,14 @@ class Importer:
 			toTitle = record[2]
 
 			if fromLang == toLang:
+				# self.logValidator.warn('Langlink to the same language to %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
 				continue
 
 			page = self.dataRepository.getPage(fromLang + ':' + fromId)
-			if page == None or page['redirect'] != None:
+			if page == None:
+				continue
+			if page['redirect'] != None:
+				# self.logValidator.warn('Langlink from a redirect source %s:%s (namespace %s)' % (page['lang'], page['title'], page['namespace']))
 				continue
 			namespace = page['namespace']
 
@@ -77,7 +84,7 @@ class Importer:
 
 			toKey = self.dataRepository.getPageKey(toLang, namespace, toTitle)
 			if toKey == None:
-				# self.log.warn('Nonexistent target %s:%s (namespace %s)' % (toLang, toTitle, namespace))
+				# self.logValidator.warn('Nonexistent langlink target %s:%s (namespace %s)' % (toLang, toTitle, namespace))
 				continue
 
 			self.dataRepository.insertLanglink(fromLang + ':' + fromId, toKey)
@@ -95,7 +102,7 @@ class Importer:
 
 			toKey = self.dataRepository.getPageKey(lang, toNamespace, toTitle)
 			if toKey == None:
-				# self.log.warn('Nonexistent target %s:%s (namespace %s)' % (toLang, toTitle, toNamespace))
+				# self.logValidator.warn('Nonexistent pagelink target %s:%s (namespace %s)' % (toLang, toTitle, toNamespace))
 				continue
 
 			self.dataRepository.insertPagelink(lang + ':' + fromId, toKey)
@@ -110,16 +117,21 @@ class Importer:
 				continue
 			fromNamespace = fromPage['namespace']
 
-			toKey = self.dataRepository.getPageKey(lang, '14', toTitle)
+			toNamespace = '14'
+			toKey = self.dataRepository.getPageKey(lang, toNamespace, toTitle)
 			if toKey == None:
-				# self.log.warn('Nonexistent target %s:%s (namespace %s)' % (toLang, toTitle, toNamespace))
+				# self.logValidator.warn('Nonexistent categorylink target %s:%s (namespace %s)' % (toLang, toTitle, toNamespace))
 				continue
 
 			self.dataRepository.insertCategorylink(lang + ':' + fromId, toKey)
 
 	def doImport(self):
 		langs = self.dataSource.getLangs()
-		self.log.info('Processing %d language(s): %s' % (len(langs), ' '.join(langs)))
+		if len(langs) > 0:
+			self.log.info('Processing %d language(s): %s' % (len(langs), ' '.join(langs)))
+		else:
+			self.log.error('No languages fround')
+			return
 
 		for lang in langs:
 			self.log.info('Importing pages from ' + lang)
@@ -167,30 +179,6 @@ class DummyDataSource:
 	def getLangs(self):
 		return []
 	def importTable(self, lang, type, callback):
-		pass
-
-class DummyDataRepository:
-	def connect(self):
-		pass
-	def disconnect(self):
-		pass
-	def findConnectedComponents(self):
-		pass
-	def getPage(self, key):
-		return None
-	def getPageKey(self, lang, namespace, title):
-		return None
-	def insertCategorylink(self, fromKey, toKey):
-		pass
-	def insertLanglink(self, fromKey, toKey):
-		pass
-	def insertPage(self, lang, id, namespace, title):
-		pass
-	def insertPagelink(self, fromKey, toKey):
-		pass
-	def insertRedirect(self, fromKey, toKey):
-		pass
-	def removeDoubleRedirects(self):
 		pass
 
 class DumpsDataSource:
@@ -284,127 +272,3 @@ class DumpsDataSource:
 			if valid:
 				records += [record]
 		callback(records)
-
-class PostgresqlRepository:
-	def __init__(self, host = None, port = None, database = None, user = None, password = None):
-		self.dbHost = host
-		self.dbPort = port
-		self.dbDatabase = database
-		self.dbUser = user
-		self.dbPassword = password
-
-	def connect(self):
-		args = {}
-		if self.dbHost != None:
-			args['host'] = self.dbHost
-		if self.dbPort != None:
-			args['port'] = self.dbPort
-		if self.dbDatabase != None:
-			args['database'] = self.dbDatabase
-		if self.dbUser != None:
-			args['user'] = self.dbUser
-		if self.dbPassword != None:
-			args['password'] = self.dbPassword
-
-		import psycopg2
-
-		self.conn = psycopg2.connect(**args)
-		self.cursor = self.conn.cursor()
-
-	def disconnect(self):
-		self.cursor.close()
-		self.conn.commit()
-		self.conn.close()
-		(self.cursor, self.conn) = (None, None)
-
-	def getPageKey(self, lang, namespace, title):
-		cur = self.conn.cursor()
-		cur.execute('SELECT key FROM network_page WHERE lang = %s AND namespace = %s AND title = %s', (lang, namespace, title))
-		row = cur.fetchone()
-		cur.close()
-		if not row:
-			return None
-		return row[0]
-
-	def getPage(self, key):
-		cur = self.conn.cursor()
-		cur.execute('SELECT lang, namespace, title, redirect_id FROM network_page WHERE key = %s', (key,))
-		row = cur.fetchone()
-		cur.close()
-		if not row:
-			return None
-		return {'lang': row[0], 'namespace': row[1], 'title': row[2], 'redirect': row[3]}
-
-	def insertPage(self, lang, id, namespace, title):
-		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (lang + ':' + id, lang, namespace, title))
-
-	def insertRedirect(self, fromKey, toKey):
-		self.cursor.execute('UPDATE network_page SET redirect_id = %s WHERE key = %s', (toKey, fromKey))
-
-	def removeDoubleRedirects(self):
-		self.cursor.execute('UPDATE network_page SET redirect_id = NULL WHERE key IN (SELECT DISTINCT a.redirect_id AS r FROM (SELECT * FROM network_page WHERE redirect_id IS NOT NULL) AS a JOIN network_page AS b ON (a.redirect_id = b.key) WHERE b.redirect_id IS NOT NULL)')
-
-
-	def insertLanglink(self, fromKey, toKey):
-		self.cursor.execute('INSERT INTO network_langlink (src_id, dst_id) VALUES (%s, %s)', (fromKey, toKey))
-
-	def findConnectedComponents(self):
-		while True:
-			cur = self.conn.cursor()
-			cur.execute('SELECT src_id FROM network_langlink WHERE comp_id IS NULL LIMIT 1')
-			row = cur.fetchone()
-			cur.close()
-
-			if not row:
-				break
-
-			compKey = str(uuid.uuid4())
-			cur = self.conn.cursor()
-			sourceKey = row[0]
-			sourcePage = self.getPage(sourceKey)
-			sourceNamespace = sourcePage['namespace']
-			cur.execute('INSERT INTO network_comp (key, namespace) VALUES (%s, %s)', (compKey, sourceNamespace))
-			cur.execute('UPDATE network_page SET comp_id = %s WHERE key = %s', (compKey, sourceKey))
-			while True:
-				cur.execute('UPDATE network_langlink '
-					+ ' SET comp_id = %s '
-					+ ' WHERE src_id IN (SELECT key FROM network_page WHERE comp_id = %s)',
-					(compKey, compKey))
-				cur.execute('UPDATE network_langlink '
-					+ ' SET comp_id = %s '
-					+ ' WHERE dst_id IN (SELECT key FROM network_page WHERE comp_id = %s)',
-					(compKey, compKey))
-				updatedPages = 0
-				cur.execute('UPDATE network_page '
-					+ ' SET comp_id = %s '
-					+ ' WHERE (comp_id IS NULL) AND key IN '
-					+ '   (SELECT src_id AS k FROM network_langlink WHERE comp_id = %s '
-					+ '   UNION SELECT dst_id AS k FROM network_langlink WHERE comp_id = %s '
-					+ '   UNION SELECT redirect_id AS k FROM network_page WHERE comp_id = %s)',
-					(compKey, compKey, compKey, compKey))
-				updatedPages += cur.rowcount
-				cur.execute('UPDATE network_page '
-					+ ' SET comp_id = %s '
-					+ ' WHERE (comp_id IS NULL) AND redirect_id IN '
-					+ '   (SELECT key AS k FROM network_page WHERE comp_id = %s)',
-					(compKey, compKey))
-				updatedPages += cur.rowcount
-				if updatedPages == 0:
-					break
-
-			cur.execute('UPDATE network_comp SET '
-				+ ' coherent = (SELECT COUNT(*) = 0 AS answer '
-				+ '   FROM (SELECT lang AS c FROM network_page '
-				+ '     WHERE comp_id = %s AND redirect_id IS NULL '
-				+ '     GROUP BY lang HAVING COUNT(*) > 1) AS foo),'
-				+ ' size = (SELECT COUNT(*) FROM network_page WHERE comp_id = %s AND redirect_id IS NULL) '
-				+ ' WHERE key = %s', (compKey, compKey, compKey))
-
-			cur.close()
-
-	def insertPagelink(self, fromKey, toKey):
-		self.cursor.execute('INSERT INTO network_pagelink (src_id, dst_id) VALUES (%s, %s)', (fromKey, toKey))
-
-	def insertCategorylink(self, fromKey, toKey):
-		self.cursor.execute('INSERT INTO network_categorylink (page_id, category_id) VALUES (%s, %s)', (fromKey, toKey))
-
