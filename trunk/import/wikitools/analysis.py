@@ -187,8 +187,7 @@ class PagePositionCalculator:
 	def doCalculate(self):
 		self.dataRepository.connect()
 		for compKey in self.dataRepository.getIncoherent():
-			if compKey.startswith('66'):
-				self.processComponent(compKey)
+			self.processComponent(compKey)
 		self.dataRepository.disconnect()
 
 class MeaningCalculator:
