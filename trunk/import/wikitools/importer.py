@@ -21,7 +21,7 @@ class Importer:
 
 	def __init__(self, dataSource = None, dataRepository = None):
 		self.log = logging.getLogger('Importer')
-		# self.logValidator = logging.getLogger('DataValidator')
+		self.logValidator = logging.getLogger('DataValidator')
 		self.dataSource = dataSource
 		self.dataRepository = dataRepository
 
@@ -46,17 +46,17 @@ class Importer:
 
 			page = self.dataRepository.getPage(lang + ':' + fromId)
 			if page == None:
-				# self.logValidator.warn('Nonexistent redirect source [%s] (language %s)' % (fromId, lang))
+				self.logValidator.warn('Nonexistent redirect source [%s] (language %s)' % (fromId, lang))
 				continue
 			fromNamespace = page['namespace']
 
 			if int(fromNamespace) != int(toNamespace):
-				# self.logValidator.warn('Redirect to a different namespace from %s:%s (%s to %s)' % (page['lang'], page['title'], fromNamespace, toNamespace))
+				self.logValidator.warn('Redirect to a different namespace from %s:%s (%s to %s)' % (page['lang'], page['title'], fromNamespace, toNamespace))
 				continue
 
 			toKey = self.dataRepository.getPageKey(lang, toNamespace, toTitle)
 			if toKey == None:
-				# self.logValidator.warn('Nonexistent redirect target %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
+				self.logValidator.warn('Nonexistent redirect target %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
 				continue
 
 			self.dataRepository.insertRedirect(lang + ':' + fromId, toKey)
@@ -68,14 +68,14 @@ class Importer:
 			toTitle = record[2]
 
 			if fromLang == toLang:
-				# self.logValidator.warn('Langlink to the same language to %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
+				self.logValidator.warn('Langlink to the same language to %s:%s' % (toLang, toTitle))
 				continue
 
 			page = self.dataRepository.getPage(fromLang + ':' + fromId)
 			if page == None:
 				continue
 			if page['redirect'] != None:
-				# self.logValidator.warn('Langlink from a redirect source %s:%s (namespace %s)' % (page['lang'], page['title'], page['namespace']))
+				self.logValidator.warn('Langlink from a redirect source %s:%s (namespace %s)' % (page['lang'], page['title'], page['namespace']))
 				continue
 			namespace = page['namespace']
 
@@ -84,7 +84,7 @@ class Importer:
 
 			toKey = self.dataRepository.getPageKey(toLang, namespace, toTitle)
 			if toKey == None:
-				# self.logValidator.warn('Nonexistent langlink target %s:%s (namespace %s)' % (toLang, toTitle, namespace))
+				self.logValidator.warn('Nonexistent langlink target %s:%s (namespace %s)' % (toLang, toTitle, namespace))
 				continue
 
 			self.dataRepository.insertLanglink(fromLang + ':' + fromId, toKey)
@@ -102,7 +102,7 @@ class Importer:
 
 			toKey = self.dataRepository.getPageKey(lang, toNamespace, toTitle)
 			if toKey == None:
-				# self.logValidator.warn('Nonexistent pagelink target %s:%s (namespace %s)' % (toLang, toTitle, toNamespace))
+				self.logValidator.warn('Nonexistent pagelink target %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
 				continue
 
 			self.dataRepository.insertPagelink(lang + ':' + fromId, toKey)
@@ -120,7 +120,7 @@ class Importer:
 			toNamespace = '14'
 			toKey = self.dataRepository.getPageKey(lang, toNamespace, toTitle)
 			if toKey == None:
-				# self.logValidator.warn('Nonexistent categorylink target %s:%s (namespace %s)' % (toLang, toTitle, toNamespace))
+				self.logValidator.warn('Nonexistent categorylink target %s:%s (namespace %s)' % (lang, toTitle, toNamespace))
 				continue
 
 			self.dataRepository.insertCategorylink(lang + ':' + fromId, toKey)

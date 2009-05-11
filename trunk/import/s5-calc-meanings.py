@@ -39,5 +39,5 @@ for opt, arg in optlist:
 if not database or not user: usage()
 
 dataRepository = wikitools.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
-pagePositionCalculator = wikitools.analysis.PagePositionCalculator(dataRepository)
-pagePositionCalculator.doCalculate()
+meaningCalculator = wikitools.analysis.MeaningCalculator(dataRepository)
+meaningCalculator.doCalculate()

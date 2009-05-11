@@ -21,23 +21,24 @@ logging.config.fileConfig(os.path.dirname(sys.argv[0]) + os.sep + 'logging.conf'
 
 def usage():
 	print 'Usage:'
-	print '  %s [-H <host>] [-P <port>] -d <database> -u <user> [-p <password>]' % sys.argv[0]
-	print '  %s [--host=<host>] [--port=<port>] --database=<database> --user=<user> [--password=<password>]' % sys.argv[0]
+	print '  %s [-H <host>] [-P <port>] -d <database> -u <user> [-p <password>] [-o <outputDir>]' % sys.argv[0]
+	print '  %s [--host=<host>] [--port=<port>] --database=<database> --user=<user> [--password=<password>] [--output-dir=<outputDir>]' % sys.argv[0]
 	print '  %s -h' % sys.argv[0]
 	print '  %s --help' % sys.argv[0]
 	sys.exit(0)
 
-optlist, args = getopt.getopt(sys.argv[1:], 'H:P:d:u:p:h', ['host=', 'port=', 'database=', 'user=', 'password=', 'help'])
-(host, port, database, user, password) = (None, None, None, None, None)
+optlist, args = getopt.getopt(sys.argv[1:], 'H:P:d:u:p:o:h', ['host=', 'port=', 'database=', 'user=', 'password=', 'output-dir=', 'help'])
+(host, port, database, user, password, outputDir) = (None, None, None, None, None, '.')
 for opt, arg in optlist:
 	if opt in ('-H', '--host'): host = arg
 	if opt in ('-P', '--port'): port = arg
 	if opt in ('-d', '--database'): database = arg
 	if opt in ('-u', '--user'): user = arg
 	if opt in ('-p', '--password'): password = arg
+	if opt in ('-o', '--outputDir'): outputDir = arg
 	if opt in ('-h', '--help'): usage()
 if not database or not user: usage()
 
 dataRepository = wikitools.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
-pagePositionCalculator = wikitools.analysis.PagePositionCalculator(dataRepository)
-pagePositionCalculator.doCalculate()
+componentDrawer = wikitools.analysis.ComponentDrawer(dataRepository, outputDir)
+componentDrawer.doDraw()

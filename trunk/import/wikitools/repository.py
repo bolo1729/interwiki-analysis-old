@@ -19,10 +19,26 @@ import logging, uuid
 class DummyDataRepository:
 	def connect(self):
 		pass
+	def countCommonCategories(self, aKey, bKey):
+		return 0
+	def countCommonLinks(self, aKey, bKey):
+		return 0
+	def deletePagePositions(self, compKey):
+		pass
 	def disconnect(self):
 		pass
 	def findConnectedComponents(self):
 		pass
+	def getIncoherent(self):
+		return []
+	def getComponentPageMeanings(self, compKey, auth):
+		return {}
+	def getComponentPagePositions(self, compKey):
+		return []
+	def getComponentPages(self, compKey):
+		return {}
+	def getComponentLanglinks(self, compKey):
+		return []
 	def getPage(self, key):
 		return None
 	def getPageKey(self, lang, namespace, title):
@@ -34,6 +50,10 @@ class DummyDataRepository:
 	def insertPage(self, lang, id, namespace, title):
 		pass
 	def insertPagelink(self, fromKey, toKey):
+		pass
+	def insertPageMeanings(self, auth, meaningKey, position):
+		pass
+	def insertPagePosition(self, pageKey, compKey, position):
 		pass
 	def insertRedirect(self, fromKey, toKey):
 		pass
@@ -47,6 +67,7 @@ class PostgresqlRepository:
 		self.dbDatabase = database
 		self.dbUser = user
 		self.dbPassword = password
+		self.log = logging.getLogger('PostgresqlRepository')
 
 	def connect(self):
 		args = {}
@@ -88,7 +109,7 @@ class PostgresqlRepository:
 		cur.close()
 		if not row:
 			return None
-		return {'lang': row[0], 'namespace': row[1], 'title': row[2], 'redirect': row[3]}
+		return {'key': key, 'lang': row[0], 'namespace': row[1], 'title': row[2], 'redirect': row[3]}
 
 	def insertPage(self, lang, id, namespace, title):
 		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (lang + ':' + id, lang, namespace, title))
@@ -162,3 +183,98 @@ class PostgresqlRepository:
 
 	def insertCategorylink(self, fromKey, toKey):
 		self.cursor.execute('INSERT INTO network_categorylink (page_id, category_id) VALUES (%s, %s)', (fromKey, toKey))
+
+	def getIncoherent(self):
+		cur = self.conn.cursor()
+		cur.execute('SELECT key FROM network_comp WHERE NOT coherent')
+		rows = cur.fetchall()
+		cur.close()
+		keys = []
+		if rows == None:
+			return keys
+		for row in rows:
+			keys += [row[0]]
+		return keys
+	
+	def getComponentPages(self, compKey):
+		cur = self.conn.cursor()
+		cur.execute('SELECT key, lang, namespace, title, redirect_id FROM network_page WHERE comp_id = %s', (compKey,))
+		rows = cur.fetchall()
+		cur.close()
+		pages = {}
+		if not rows:
+			return pages
+		for row in rows:
+			pages[row[0]] = {'key': row[0], 'lang': row[1], 'namespace': row[2], 'title': row[3], 'redirect': row[4], 'comp': compKey}
+		return pages
+
+	def getComponentLanglinks(self, compKey):
+		cur = self.conn.cursor()
+		cur.execute('SELECT src_id, dst_id FROM network_langlink WHERE comp_id = %s', (compKey,))
+		rows = cur.fetchall()
+		cur.close()
+		links = []
+		if not rows:
+			return links
+		for row in rows:
+			links += [(row[0], row[1])]
+		return links
+
+	def deletePagePositions(self, compKey):
+		self.cursor.execute('DELETE FROM network_pageposition WHERE comp_id = %s', (compKey,))
+
+	def insertPagePosition(self, pageKey, compKey, position):
+		self.cursor.execute('INSERT INTO network_pageposition (page_id, x, y, z, comp_id) VALUES (%s, %s, %s, %s, %s)', (pageKey, str(position[0]), str(position[1]), str(position[2]), compKey))
+	
+	def getComponentPagePositions(self, compKey):
+		cur = self.conn.cursor()
+		cur.execute('SELECT page_id, x, y, z FROM network_pageposition WHERE comp_id = %s', (compKey,))
+		rows = cur.fetchall()
+		cur.close()
+		pages = {}
+		if not rows:
+			return pages
+		for row in rows:
+			pages[row[0]] = (float(row[1]), float(row[2]), float(row[3]))
+		return pages
+
+	def deletePageMeanings(self, auth, compKey):
+		self.cursor.execute('DELETE FROM network_pagemeaning WHERE comp_id = %s AND auth = %s', (compKey, auth))
+
+	def insertPageMeanings(self, auth, meaningKey, compKey, pageKeys):
+		for pageKey in pageKeys:
+			self.cursor.execute('INSERT INTO network_pagemeaning (auth, page_id, meaning, comp_id) VALUES (%s, %s, %s, %s)', (auth, pageKey, meaningKey, compKey))
+
+	def getComponentPageMeanings(self, compKey, auth):
+		cur = self.conn.cursor()
+		cur.execute('SELECT page_id, meaning FROM network_pagemeaning WHERE comp_id = %s AND auth = %s', (compKey, auth))
+		rows = cur.fetchall()
+		cur.close()
+		pages = {}
+		if not rows:
+			return pages
+		for row in rows:
+			pages[row[0]] = row[1]
+		return pages
+
+	def countCommonCategories(self, aKey, bKey):
+		cur = self.conn.cursor()
+		cur.execute('SELECT COUNT(*) FROM '
+			+ ' ((SELECT dst_id FROM network_langlink WHERE src_id IN (SELECT category_id FROM network_categorylink WHERE page_id = %s))'
+			+ ' INTERSECT (SELECT category_id FROM network_categorylink WHERE page_id = %s)) AS foo',
+			(aKey, bKey))
+		row = cur.fetchone()
+		cur.close()
+		# self.log.debug('Found %s common categories between %s and %s' % (row[0], aKey, bKey))
+		return int(row[0])
+
+	def countCommonLinks(self, aKey, bKey):
+		cur = self.conn.cursor()
+		cur.execute('SELECT COUNT(*) FROM '
+			+ ' ((SELECT dst_id FROM network_langlink WHERE src_id IN (SELECT dst_id FROM network_pagelink WHERE src_id = %s))'
+			+ ' INTERSECT (SELECT dst_id FROM network_pagelink WHERE src_id = %s)) AS foo',
+			(aKey, bKey))
+		row = cur.fetchone()
+		cur.close()
+		# self.log.debug('Found %s common links between %s and %s' % (row[0], aKey, bKey))
+		return int(row[0])
