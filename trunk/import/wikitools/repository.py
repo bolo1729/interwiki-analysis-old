@@ -61,13 +61,16 @@ class DummyDataRepository:
 		pass
 
 class PostgresqlRepository:
-	def __init__(self, host = None, port = None, database = None, user = None, password = None):
+	def __init__(self, host = None, port = None, database = None, user = None, password = None, cache = False):
 		self.dbHost = host
 		self.dbPort = port
 		self.dbDatabase = database
 		self.dbUser = user
 		self.dbPassword = password
 		self.log = logging.getLogger('PostgresqlRepository')
+		self.cache = cache
+		self.pages = {}
+		self.pageKeys = {}
 
 	def connect(self):
 		args = {}
@@ -94,6 +97,8 @@ class PostgresqlRepository:
 		(self.cursor, self.conn) = (None, None)
 
 	def getPageKey(self, lang, namespace, title):
+		if (lang, namespace, title) in self.pageKeys:
+			return self.pageKeys[(lang, namespace, title)]
 		cur = self.conn.cursor()
 		cur.execute('SELECT key FROM network_page WHERE lang = %s AND namespace = %s AND title = %s', (lang, namespace, title))
 		row = cur.fetchone()
@@ -103,6 +108,8 @@ class PostgresqlRepository:
 		return row[0]
 
 	def getPage(self, key):
+		if key in self.pages:
+			return self.pages[key]
 		cur = self.conn.cursor()
 		cur.execute('SELECT lang, namespace, title, redirect_id FROM network_page WHERE key = %s', (key,))
 		row = cur.fetchone()
@@ -112,9 +119,15 @@ class PostgresqlRepository:
 		return {'key': key, 'lang': row[0], 'namespace': row[1], 'title': row[2], 'redirect': row[3]}
 
 	def insertPage(self, lang, id, namespace, title):
-		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (lang + ':' + id, lang, namespace, title))
+		key = lang + ':' + id
+		if self.cache:
+			self.pageKeys[(lang, namespace, title)] = key
+			self.pages[key] = {'key': key, 'lang': lang, 'namespace': namespace, 'title': title, 'redirect': None}
+		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (key, lang, namespace, title))
 
 	def insertRedirect(self, fromKey, toKey):
+		if self.cache and (fromKey in pages):
+			self.pages[fromKey]['redirect'] = toKey
 		self.cursor.execute('UPDATE network_page SET redirect_id = %s WHERE key = %s', (toKey, fromKey))
 
 	def removeDoubleRedirects(self):
