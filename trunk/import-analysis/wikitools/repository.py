@@ -126,7 +126,7 @@ class PostgresqlRepository:
 		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (key, lang, namespace, title))
 
 	def insertRedirect(self, fromKey, toKey):
-		if self.cache and (fromKey in pages):
+		if self.cache and (fromKey in self.pages):
 			self.pages[fromKey]['redirect'] = toKey
 		self.cursor.execute('UPDATE network_page SET redirect_id = %s WHERE key = %s', (toKey, fromKey))
 
