@@ -62,7 +62,7 @@ do
   get ${lg} "categorylinks.sql.gz" 
   get ${lg} "pagelinks.sql.gz" 
 
-  get ${lg} "pages-articles.xml.bz2"
+  # get ${lg} "pages-articles.xml.bz2"
 done
 echo Finished at `date`
 

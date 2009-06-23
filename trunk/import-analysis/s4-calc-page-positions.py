@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Interwiki analysis tools
 # Copyright (C) 2007-2009  Lukasz Bolikowski
 #
