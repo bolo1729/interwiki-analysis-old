@@ -19,11 +19,12 @@ import gzip, logging, os, re, sys
 class Importer:
 	NAMESPACES = (0, 14)
 
-	def __init__(self, dataSource = None, dataRepository = None):
+	def __init__(self, dataSource = None, dataRepository = None, memProfile = False):
 		self.log = logging.getLogger('Importer')
 		self.logValidator = logging.getLogger('DataValidator')
 		self.dataSource = dataSource
 		self.dataRepository = dataRepository
+		self.memProfile = memProfile
 
 	def processPages(self, lang, records):
 		for record in records:
@@ -130,14 +131,23 @@ class Importer:
 		if len(langs) > 0:
 			self.log.info('Processing %d language(s): %s' % (len(langs), ' '.join(langs)))
 		else:
-			self.log.error('No languages fround')
+			self.log.error('No languages found')
 			return
+
+		if self.memProfile:
+			from guppy import hpy
+			hp = hpy()
+			hp.setrelheap()
 
 		for lang in langs:
 			self.log.info('Importing pages from ' + lang)
 			self.dataRepository.connect()
 			self.dataSource.importTable(lang, 'page', lambda r : self.processPages(lang, r))
 			self.dataRepository.disconnect()
+
+		if self.memProfile:
+			import code
+			code.interact(local = {'hp': hp})
 
 		for lang in langs:
 			self.log.info('Importing redirects from ' + lang)
@@ -208,6 +218,7 @@ class DumpsDataSource:
 			if not line.startswith('INSERT INTO'):
 				continue
 			self.importLine(line, callback)
+		source.close()
 
 	def importLine(self, line, callback):
 		cur = 0

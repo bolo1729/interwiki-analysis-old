@@ -21,14 +21,14 @@ logging.config.fileConfig(os.path.dirname(sys.argv[0]) + os.sep + 'logging.conf'
 
 def usage():
 	print 'Usage:'
-	print '  %s [-H <host>] [-P <port>] -d <database> -u <user> [-p <password>] [-i <importDir>] [-c]' % sys.argv[0]
-	print '  %s [--host=<host>] [--port=<port>] --database=<database> --user=<user> [--password=<password>] [--import-dir=<importDir>] [--cache]' % sys.argv[0]
+	print '  %s [-H <host>] [-P <port>] -d <database> -u <user> [-p <password>] [-i <importDir>] [-c] [-m]' % sys.argv[0]
+	print '  %s [--host=<host>] [--port=<port>] --database=<database> --user=<user> [--password=<password>] [--import-dir=<importDir>] [--cache] [--memProfile]' % sys.argv[0]
 	print '  %s -h' % sys.argv[0]
 	print '  %s --help' % sys.argv[0]
 	sys.exit(0)
 
-optlist, args = getopt.getopt(sys.argv[1:], 'H:P:d:u:p:i:ch', ['host=', 'port=', 'database=', 'user=', 'password=', 'import-dir=', 'cache', 'help'])
-(host, port, database, user, password, importDir, cache) = (None, None, None, None, None, '.', False)
+optlist, args = getopt.getopt(sys.argv[1:], 'H:P:d:u:p:i:cmh', ['host=', 'port=', 'database=', 'user=', 'password=', 'import-dir=', 'cache', 'help'])
+(host, port, database, user, password, importDir, cache, memProfile) = (None, None, None, None, None, '.', False, False)
 for opt, arg in optlist:
 	if opt in ('-H', '--host'): host = arg
 	if opt in ('-P', '--port'): port = arg
@@ -36,12 +36,13 @@ for opt, arg in optlist:
 	if opt in ('-u', '--user'): user = arg
 	if opt in ('-p', '--password'): password = arg
 	if opt in ('-i', '--import-dir'): importDir = arg
-	if opt in ('-i', '--cache'): cache = True
+	if opt in ('-c', '--cache'): cache = True
+	if opt in ('-m', '--memProfile'): memProfile = True
 	if opt in ('-h', '--help'): usage()
 if not database or not user: usage()
 
 dataSource = wikitools.importer.DumpsDataSource(importDir)
 dataRepository = wikitools.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password, cache = cache)
-importer = wikitools.importer.Importer(dataSource, dataRepository)
+importer = wikitools.importer.Importer(dataSource, dataRepository, memProfile)
 
 importer.doImport()

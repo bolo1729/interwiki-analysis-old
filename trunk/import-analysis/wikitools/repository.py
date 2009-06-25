@@ -98,7 +98,7 @@ class PostgresqlRepository:
 
 	def getPageKey(self, lang, namespace, title):
 		if self.cache:
-			tmp = lang + ":" + namespace + ":" + title
+			tmp = lang + ":" + namespace + ":" + title.encode('utf-8')
 			if tmp in self.pageKeys:
 				return self.pageKeys[tmp]
 			return None
@@ -118,7 +118,7 @@ class PostgresqlRepository:
 				namespace = tmp[0].split(":")[0]
 				title = ":".join(tmp[0].split(":")[1:])
 				redirect = tmp[1]
-				return {'key': key, 'lang': lang, 'namespace': namespace, 'title': title, 'redirect': redirect}
+				return {'key': key, 'lang': lang, 'namespace': namespace, 'title': title.decode('utf-8'), 'redirect': redirect}
 			return None
 		cur = self.conn.cursor()
 		cur.execute('SELECT lang, namespace, title, redirect_id FROM network_page WHERE key = %s', (key,))
@@ -131,13 +131,13 @@ class PostgresqlRepository:
 	def insertPage(self, lang, id, namespace, title):
 		key = lang + ':' + id
 		if self.cache:
-			self.pageKeys[lang + ":" + namespace + ":" + title] = key
-			self.pages[key] = [namespace + ":" + title, None]
+			self.pageKeys[lang + ":" + namespace + ":" + title.encode('utf-8')] = key
+			self.pages[key] = (namespace + ":" + title.encode('utf-8'), None)
 		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (key, lang, namespace, title))
 
 	def insertRedirect(self, fromKey, toKey):
 		if self.cache and (fromKey in self.pages):
-			self.pages[fromKey][1] = toKey
+			self.pages[fromKey] = (self.pages[fromKey][0], toKey)
 		self.cursor.execute('UPDATE network_page SET redirect_id = %s WHERE key = %s', (toKey, fromKey))
 
 	def removeDoubleRedirects(self):
