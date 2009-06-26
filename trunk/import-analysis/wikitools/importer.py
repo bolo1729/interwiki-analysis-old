@@ -65,7 +65,7 @@ class Importer:
 	def processLanglinks(self, fromLang, records):
 		for record in records:
 			fromId = record[0]
-			toLang = record[1]
+			toLang = record[1].encode('utf-8')
 			toTitle = record[2]
 
 			if fromLang == toLang:
@@ -135,6 +135,7 @@ class Importer:
 			return
 
 		if self.memProfile:
+			import code
 			from guppy import hpy
 			hp = hpy()
 			hp.setrelheap()
@@ -146,7 +147,6 @@ class Importer:
 			self.dataRepository.disconnect()
 
 		if self.memProfile:
-			import code
 			code.interact(local = {'hp': hp})
 
 		for lang in langs:
@@ -154,6 +154,9 @@ class Importer:
 			self.dataRepository.connect()
 			self.dataSource.importTable(lang, 'redirect', lambda r : self.processRedirects(lang, r))
 			self.dataRepository.disconnect()
+
+		if self.memProfile:
+			code.interact(local = {'hp': hp})
 
 		self.log.info('Removing double redirects')
 		self.dataRepository.connect()
@@ -182,6 +185,9 @@ class Importer:
 			self.dataRepository.connect()
 			self.dataSource.importTable(lang, 'pagelinks', lambda r : self.processPagelinks(lang, r))
 			self.dataRepository.disconnect()
+
+		if self.memProfile:
+			code.interact(local = {'hp': hp})
 
 		self.log.info('Done')
 

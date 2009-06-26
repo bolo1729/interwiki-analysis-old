@@ -131,13 +131,15 @@ class PostgresqlRepository:
 	def insertPage(self, lang, id, namespace, title):
 		key = lang + ':' + id
 		if self.cache:
-			self.pageKeys[lang + ":" + namespace + ":" + title.encode('utf-8')] = key
-			self.pages[key] = (namespace + ":" + title.encode('utf-8'), None)
+			key = intern(key)
+			encodedTitle = title.encode('utf-8')
+			self.pageKeys[lang + ":" + namespace + ":" + encodedTitle] = key
+			self.pages[key] = (namespace + ":" + encodedTitle, None)
 		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (key, lang, namespace, title))
 
 	def insertRedirect(self, fromKey, toKey):
 		if self.cache and (fromKey in self.pages):
-			self.pages[fromKey] = (self.pages[fromKey][0], toKey)
+			self.pages[fromKey] = (self.pages[fromKey][0], intern(toKey))
 		self.cursor.execute('UPDATE network_page SET redirect_id = %s WHERE key = %s', (toKey, fromKey))
 
 	def removeDoubleRedirects(self):
