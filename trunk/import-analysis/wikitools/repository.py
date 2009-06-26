@@ -115,8 +115,8 @@ class PostgresqlRepository:
 			if key in self.pages:
 				tmp = self.pages[key]
 				lang = key.split(":")[0]
-				namespace = tmp[0].split(":")[0]
-				title = ":".join(tmp[0].split(":")[1:])
+				namespace = tmp[0].split(":")[1]
+				title = ":".join(tmp[0].split(":")[2:])
 				redirect = tmp[1]
 				return {'key': key, 'lang': lang, 'namespace': namespace, 'title': title.decode('utf-8'), 'redirect': redirect}
 			return None
@@ -132,9 +132,9 @@ class PostgresqlRepository:
 		key = lang + ':' + id
 		if self.cache:
 			key = intern(key)
-			encodedTitle = title.encode('utf-8')
-			self.pageKeys[lang + ":" + namespace + ":" + encodedTitle] = key
-			self.pages[key] = (namespace + ":" + encodedTitle, None)
+			tmp = lang + ":" + namespace + ":" + title.encode('utf-8')
+			self.pageKeys[tmp] = key
+			self.pages[key] = (tmp, None)
 		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (key, lang, namespace, title))
 
 	def insertRedirect(self, fromKey, toKey):
