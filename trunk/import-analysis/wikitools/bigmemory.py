@@ -146,6 +146,7 @@ class BigMemoryPostgresqlRepository:
 		for idx in xrange(1, self.size):
 			if visited[idx]:
 				continue
+			self.log.debug('start: %s' % self.keys[idx])
 			page = self.getPage(self.keys[idx])
 			cur = self.conn.cursor()
 			if self.langlinks[idx] == None and self.redirects[idx] == None and not idx in self.revRedirects:
@@ -155,7 +156,7 @@ class BigMemoryPostgresqlRepository:
 				cur.close()
 				continue
 
-			nodes = [idx]
+			nodes = set([idx])
 			queue = [idx]
 			links = []
 			while len(queue) > 0:
@@ -167,24 +168,24 @@ class BigMemoryPostgresqlRepository:
 						j = abs(j)
 						if j in nodes:
 							continue
-						nodes += [j]
+						nodes |= set([j])
 						queue += [j]
-						# self.log.debug('through langlink: %s' % self.keys[j])
+						self.log.debug('through langlink: %s' % self.keys[j])
 				if self.redirects[i] != None:
 					j = self.byKey[self.redirects[i]]
 					if not j in nodes:
-						nodes += [j]
+						nodes |= set([j])
 						queue += [j]
-						# self.log.debug('through redirect: %s' % self.keys[j])
+						self.log.debug('through redirect: %s' % self.keys[j])
 				if i in self.revRedirects:
 					for j in self.revRedirects[i]:
 						if not j in nodes:
-							nodes += [j]
+							nodes |= set([j])
 							queue += [j]
-							# self.log.debug('through rev. redirect: %s' % self.keys[j])
+							self.log.debug('through rev. redirect: %s' % self.keys[j])
 
 			keys = [self.keys[i] for i in nodes]
-			# self.log.debug('keys = %s' % keys)
+			self.log.debug('keys = %s' % keys)
 			coherent, langs = True, set()
 			for key in keys:
 				p = self.getPage(key)
