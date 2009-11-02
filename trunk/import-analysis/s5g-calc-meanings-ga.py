@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import getopt, logging.config, os, sys, wikitools.repo.repository, wikitools.analysis.visual
+import getopt, logging.config, os, sys, wikitools.repo.repository, wikitools.analysis.genetic
 
 logging.config.fileConfig(os.path.dirname(sys.argv[0]) + os.sep + 'logging.conf')
 
@@ -40,5 +40,5 @@ for opt, arg in optlist:
 if not database or not user: usage()
 
 dataRepository = wikitools.repo.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
-componentDrawer = wikitools.analysis.visual.ComponentDrawer(dataRepository, outputDir)
-componentDrawer.processAll()
+geneticCalculator = wikitools.analysis.genetic.GeneticCalculator(dataRepository)
+geneticCalculator.processAll()

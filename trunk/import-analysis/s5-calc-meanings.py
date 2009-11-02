@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import getopt, logging.config, os, sys, wikitools.repository, wikitools.analysis
+import getopt, logging.config, os, sys, wikitools.repo.repository, wikitools.analysis.spatial
 
 logging.config.fileConfig(os.path.dirname(sys.argv[0]) + os.sep + 'logging.conf')
 
@@ -38,6 +38,6 @@ for opt, arg in optlist:
 	if opt in ('-h', '--help'): usage()
 if not database or not user: usage()
 
-dataRepository = wikitools.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
-meaningCalculator = wikitools.analysis.MeaningCalculator(dataRepository)
-meaningCalculator.doCalculate()
+dataRepository = wikitools.repo.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
+meaningCalculator = wikitools.analysis.spatial.MeaningCalculator(dataRepository)
+meaningCalculator.processAll()

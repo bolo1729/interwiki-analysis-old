@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import getopt, logging.config, os, sys, wikitools.bigmemory, wikitools.importer, wikitools.repository
+import getopt, logging.config, os, sys, wikitools.repo.bigmemory, wikitools.importer, wikitools.repo.repository
 
 logging.config.fileConfig(os.path.dirname(sys.argv[0]) + os.sep + 'logging.conf')
 
@@ -43,9 +43,9 @@ if not database or not user: usage()
 
 dataSource = wikitools.importer.DumpsDataSource(importDir)
 if bigMemory:
-	dataRepository = wikitools.bigmemory.BigMemoryPostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
+	dataRepository = wikitools.repo.bigmemory.BigMemoryPostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
 else:
-	dataRepository = wikitools.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
+	dataRepository = wikitools.repo.repository.PostgresqlRepository(host = host, port = port, database = database, user = user, password = password)
 importer = wikitools.importer.Importer(dataSource, dataRepository, memProfile)
 
 importer.doImport()

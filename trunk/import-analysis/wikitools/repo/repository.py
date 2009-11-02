@@ -16,50 +16,6 @@
 
 import logging, uuid
 
-class DummyDataRepository:
-	def connect(self):
-		pass
-	def countCommonCategories(self, aKey, bKey):
-		return 0
-	def countCommonLinks(self, aKey, bKey):
-		return 0
-	def deletePagePositions(self, compKey):
-		pass
-	def disconnect(self):
-		pass
-	def findConnectedComponents(self):
-		pass
-	def getIncoherent(self):
-		return []
-	def getComponentPageMeanings(self, compKey, auth):
-		return {}
-	def getComponentPagePositions(self, compKey):
-		return []
-	def getComponentPages(self, compKey):
-		return {}
-	def getComponentLanglinks(self, compKey):
-		return []
-	def getPage(self, key):
-		return None
-	def getPageKey(self, lang, namespace, title):
-		return None
-	def insertCategorylink(self, fromKey, toKey):
-		pass
-	def insertLanglink(self, fromKey, toKey):
-		pass
-	def insertPage(self, lang, id, namespace, title):
-		pass
-	def insertPagelink(self, fromKey, toKey):
-		pass
-	def insertPageMeanings(self, auth, meaningKey, position):
-		pass
-	def insertPagePosition(self, pageKey, compKey, position):
-		pass
-	def insertRedirect(self, fromKey, toKey):
-		pass
-	def removeDoubleRedirects(self):
-		pass
-
 class PostgresqlRepository:
 	def __init__(self, host = None, port = None, database = None, user = None, password = None, cache = False):
 		self.dbHost = host
