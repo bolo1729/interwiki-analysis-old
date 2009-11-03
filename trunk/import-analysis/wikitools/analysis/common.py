@@ -108,10 +108,10 @@ class Component:
 
 class AbstractComponentProcessor:
     def processAll(self):
-        self.dataRepository.connect()
+        # self.dataRepository.connect()
         for compKey in self.dataRepository.getIncoherent():
-            self.processComponent(compKey, False)
-        self.dataRepository.disconnect()
+            self.processComponent(compKey, True)
+        # self.dataRepository.disconnect()
 
     def processComponent(self, compKey, separate = True):
         if separate:
