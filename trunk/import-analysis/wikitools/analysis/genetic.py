@@ -23,7 +23,6 @@ class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
     RND_SIZE = 10
     MUTATION = 0.05
     STAGNATION = 5
-    MAX_SIZE = 300
 
     def __init__(self, dataRepository, options):
         self.log = logging.getLogger('GeneticCalculator')
@@ -31,10 +30,6 @@ class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
         self.options = options
 
     def doProcess(self, comp):
-        if len(comp.mPages) > self.MAX_SIZE:
-            self.log.info('%s %8.5f' % (comp.key, 0))
-            return
-
         ordered = []
         for (f, t) in comp.mLinks:
             ordered += [(f, t)]

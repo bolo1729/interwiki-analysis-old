@@ -115,6 +115,9 @@ class ComponentPainter(wikitools.analysis.common.AbstractComponentProcessor):
         
         svg += '</svg>\n'
         
-        file = open(self.options.outputDir + os.sep + compKey + '.svg', 'w')
+        path = self.options.outputDir + os.sep + compKey[0:2] + os.sep + compKey[2:4]
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        file = open(path + os.sep + compKey + '.svg', 'w')
         file.write(svg)
         file.close()

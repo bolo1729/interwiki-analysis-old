@@ -88,6 +88,8 @@ class Component:
 
     def updateWeights(self, repository = None, commonCategories = False, commonLinks = False):
         self.weights = {}
+        self.commonCategories = {}
+        self.commonLinks = {}
         for (fromKey, toKey) in self.links:
             target = self.pages[toKey]['redirect']
             if target != None:
@@ -97,19 +99,39 @@ class Component:
             if not (fromKey, toKey) in self.weights:
                 self.weights[(fromKey, toKey)] = 0
                 if commonCategories:
-                    self.weights[(fromKey, toKey)] += self.FACTOR_CATEGORY * math.sqrt(repository.countCommonCategories(fromKey, toKey))
+                    common = repository.countCommonCategories(fromKey, toKey)
+                    self.commonCategories[(fromKey, toKey)] = common
+                    self.weights[(fromKey, toKey)] += self.FACTOR_CATEGORY * math.sqrt(common)
                 if commonLinks:
-                    self.weights[(fromKey, toKey)] += self.FACTOR_LINK * math.log(1.0 + repository.countCommonLinks(fromKey, toKey))
+                    common = repository.countCommonLinks(fromKey, toKey)
+                    self.commonLinks[(fromKey, toKey)] = common
+                    self.weights[(fromKey, toKey)] += self.FACTOR_LINK * math.log(1.0 + common)
             if target == None:
                 self.weights[(fromKey, toKey)] += self.WEIGHT_NORMAL
             else:
                 self.weights[(fromKey, toKey)] += self.WEIGHT_REDIRECT
 
+    def resetWeights(self):
+        self.weights = {}
+        self.commonCategories = {}
+        self.commonLinks = {}
+        for (fromKey, toKey) in self.links:
+            target = self.pages[toKey]['redirect']
+            if target != None:
+                toKey = target
+            if fromKey > toKey:
+                (fromKey, toKey) = (toKey, fromKey)
+            self.weights[(fromKey, toKey)] = 1
 
 class AbstractComponentProcessor:
+    LIMIT = 300
+    
     def processAll(self):
         self.dataRepository.connect()
-        incoherent = self.dataRepository.getIncoherent()
+        if 'no-big' in self.options.switches:
+            incoherent = self.dataRepository.getIncoherent(self.LIMIT)
+        else:
+            incoherent = self.dataRepository.getIncoherent()
         self.dataRepository.disconnect()
         for compKey in incoherent:
             self.processComponent(compKey, True)
@@ -121,6 +143,13 @@ class AbstractComponentProcessor:
         pages = self.dataRepository.getComponentPages(compKey)
         links = self.dataRepository.getComponentLanglinks(compKey)
         comp = Component(compKey, pages, links)
+        
+        if 'common-cats' in self.options.switches:
+            comp.updateWeights(self.dataRepository, True, False)
+
+        if 'no-weights' in self.options.switches:
+            comp.resetWeights();
+        
         self.doProcess(comp)
         if separate:
             self.dataRepository.disconnect()

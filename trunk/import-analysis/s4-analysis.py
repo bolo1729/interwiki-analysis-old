@@ -81,11 +81,12 @@ class Analysis:
 				self.execVisualize()
 			if command == 'serialize':
 				self.execSerialize()
+		self.log.info('Done.')
 
 	def execImport(self):
 		import wikitools.importer, wikitools.repo.bigmemory, wikitools.repo.repository
-		doBigMemory = 'bigmem' in self.opts.switches
-		doMemoryProfile = 'memprof' in self.opts.switches
+		doBigMemory = 'big-memory' in self.opts.switches
+		doMemoryProfile = 'mem-profile' in self.opts.switches
 		dataSource = wikitools.importer.DumpsDataSource(self.opts.inputDir)
 		if doBigMemory:
 			dataRepository = wikitools.repo.bigmemory.BigMemoryPostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password)
