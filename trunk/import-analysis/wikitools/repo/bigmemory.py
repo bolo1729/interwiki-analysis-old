@@ -243,7 +243,7 @@ class BigMemoryPostgresqlRepository:
 		if not limit:
 			cur.execute('SELECT key FROM network_comp WHERE NOT coherent')
 		else:
-			cur.execute('SELECT key FROM network_comp WHERE NOT coherent AND size <= %s', str(limit))
+			cur.execute('SELECT key FROM network_comp WHERE NOT coherent AND size <= %s', (limit,))
 		rows = cur.fetchall()
 		cur.close()
 		keys = []
