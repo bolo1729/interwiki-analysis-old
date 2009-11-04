@@ -19,9 +19,10 @@ import logging, math, numpy, os, random, scipy.optimize, sys, uuid, wikitools.an
 class SpatialMeaningCalculator(wikitools.analysis.common.AbstractComponentProcessor):
     AUTH = 'analysis.spatial'
     
-    def __init__(self, dataRepository):
+    def __init__(self, dataRepository, options):
         self.log = logging.getLogger('SpatialMeaningCalculator')
         self.dataRepository = dataRepository
+        self.options = options
 
     def sqDist(self, src, dst):
         return 1.0 * (src[0] - dst[0])*(src[0] - dst[0]) + 1.0 * (src[1] - dst[1])*(src[1] - dst[1]) + 1.0 * (src[2] - dst[2])*(src[2] - dst[2])

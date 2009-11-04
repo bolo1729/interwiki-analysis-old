@@ -18,13 +18,13 @@ import logging, math, os, random, sys, uuid, wikitools.analysis.common
 
 class ComponentPainter(wikitools.analysis.common.AbstractComponentProcessor):
     SCALE = 100.0
-    AUTH = 'analysis.spatial'
+    AUTH = 'analysis.genetic'
     WIDTH = 0.4
 
-    def __init__(self, dataRepository, outputDir = '.'):
+    def __init__(self, dataRepository, options):
         self.log = logging.getLogger('ComponentDrawer')
         self.dataRepository = dataRepository
-        self.outputDir = outputDir
+        self.options = options
 
     def map(self, position, offset):
         return (self.SCALE * (position[0] + offset[0]), self.SCALE * (position[1] + offset[1]))
@@ -35,7 +35,7 @@ class ComponentPainter(wikitools.analysis.common.AbstractComponentProcessor):
         links = comp.links
         pagePositions = self.dataRepository.getComponentPagePositions(compKey)
         meanings = self.dataRepository.getComponentPageMeanings(compKey, self.AUTH)
-
+        
         links = set(links)
         rlinks = set([])
         for (aKey, bKey) in links:
@@ -115,6 +115,6 @@ class ComponentPainter(wikitools.analysis.common.AbstractComponentProcessor):
         
         svg += '</svg>\n'
         
-        file = open(self.outputDir + os.sep + compKey + '.svg', 'w')
+        file = open(self.options.outputDir + os.sep + compKey + '.svg', 'w')
         file.write(svg)
         file.close()

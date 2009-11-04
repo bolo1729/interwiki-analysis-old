@@ -1,0 +1,22 @@
+
+
+== Step 0: Database initialization ==
+
+Init the database where preprocessed links will be stored.  It can
+be done like this:
+  createdb wikidb
+  psql wikidb -f schema.sql
+Change 'wikidb' to a name of your choice.  Also, you might need
+to create a user, grant permissions, etc.  Refer to the PostgreSQL
+docs for details.
+
+== Step 1: Getting the dumps ==
+
+Download the relevant dumps using this script:
+  ./s1-get-wikis.sh
+
+== Step 2: Import the dumps to the database ==
+
+Import the dumps to the database and run analysis.
+For example:
+  ./s2-analysis.py -d wikidb -u wikiuser -r import,genetic,visualize

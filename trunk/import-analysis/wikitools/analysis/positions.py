@@ -19,11 +19,13 @@ import logging, math, numpy, random, scipy.optimize, wikitools.analysis.common
 class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcessor):
 	INITBOX = 10.0
 	R = 1.0
-	REPULSIVE = 100.0
+	S = 10.0
+	REPULSIVE = 10.0
 
-	def __init__(self, dataRepository):
+	def __init__(self, dataRepository, options):
 		self.log = logging.getLogger('PagePositionCalculator')
 		self.dataRepository = dataRepository
+		self.options = options
 
 	def doProcess(self, comp):
 		pageKeys = sorted(comp.mPages)
@@ -74,7 +76,6 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 			r2 = (aX - bX)*(aX - bX) + (aY - bY)*(aY - bY)
 			r = math.sqrt(r2)
 			weight = idxLinks[(aIdx, bIdx)]
-			weight = weight * weight * weight
 			value += weight * (r - self.R) * (r - self.R)
 
 		for lang in idxLangs:
@@ -90,7 +91,8 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 
 					r2 = (aX - bX)*(aX - bX) + (aY - bY)*(aY - bY)
 					r = math.sqrt(r2)
-					value += 1.0 * self.REPULSIVE / r
+					# value += 1.0 * self.REPULSIVE / r
+					value += 1.0 * self.REPULSIVE * (r - self.S) * (r - self.S)
 					
 		return value
 
@@ -107,7 +109,6 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 			r2 = (aX - bX)*(aX - bX) + (aY - bY)*(aY - bY)
 			r = math.sqrt(r2)
 			weight = idxLinks[(aIdx, bIdx)]
-			weight = weight * weight * weight
 
 			gradient[2*aIdx + 0] += 2.0 * weight * (aX - bX) / r * (r - self.R)
 			gradient[2*aIdx + 1] += 2.0 * weight * (aY - bY) / r * (r - self.R)
@@ -130,10 +131,16 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 					r = math.sqrt(r2)
 					r3 = r * r * r
 					
-					gradient[2*aIdx + 0] += self.REPULSIVE * (bX - aX) / r3
-					gradient[2*aIdx + 1] += self.REPULSIVE * (bY - aY) / r3
+					# gradient[2*aIdx + 0] += self.REPULSIVE * (bX - aX) / r3
+					# gradient[2*aIdx + 1] += self.REPULSIVE * (bY - aY) / r3
 
-					gradient[2*bIdx + 0] += self.REPULSIVE * (aX - bX) / r3
-					gradient[2*bIdx + 1] += self.REPULSIVE * (aY - bY) / r3
+					# gradient[2*bIdx + 0] += self.REPULSIVE * (aX - bX) / r3
+					# gradient[2*bIdx + 1] += self.REPULSIVE * (aY - bY) / r3
+
+					gradient[2*aIdx + 0] += 2.0 * self.REPULSIVE * (aX - bX) / r * (r - self.S)
+					gradient[2*aIdx + 1] += 2.0 * self.REPULSIVE * (aY - bY) / r * (r - self.S)
+
+					gradient[2*bIdx + 0] += 2.0 * self.REPULSIVE * (bX - aX) / r * (r - self.S)
+					gradient[2*bIdx + 1] += 2.0 * self.REPULSIVE * (bY - aY) / r * (r - self.S)
 
 		return gradient

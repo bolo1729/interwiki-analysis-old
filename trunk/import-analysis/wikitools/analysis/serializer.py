@@ -1,4 +1,3 @@
-#!/bin/bash
 # Interwiki analysis tools
 # Copyright (C) 2007-2009  Lukasz Bolikowski
 #
@@ -15,11 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging, math, os, random, sys, uuid, wikitools.analysis.common
 
-# Initializes the database where preprocessed links will be stored.
-# Change 'wikidb' to a name of your choice.  Also, you might need
-# to create a user, grant permissions, etc.  Refer to the PostgreSQL
-# docs for details.
+class ComponentSerializer(wikitools.analysis.common.AbstractComponentProcessor):
+    AUTH = 'analysis.genetic'
 
-createdb wikidb
-psql wikidb -f schema.sql
+    def __init__(self, dataRepository, options):
+        self.log = logging.getLogger('ComponentSerializer')
+        self.dataRepository = dataRepository
+        self.options = options
+
+    def doProcess(self, comp):
+        compKey = comp.key
+        pages = comp.pages
+        links = comp.links
+        meanings = self.dataRepository.getComponentPageMeanings(compKey, self.AUTH)
+        
+        # TODO

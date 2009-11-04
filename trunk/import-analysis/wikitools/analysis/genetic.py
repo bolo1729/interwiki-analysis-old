@@ -25,13 +25,14 @@ class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
     STAGNATION = 5
     MAX_SIZE = 300
 
-    def __init__(self, dataRepository):
+    def __init__(self, dataRepository, options):
         self.log = logging.getLogger('GeneticCalculator')
         self.dataRepository = dataRepository
+        self.options = options
 
     def doProcess(self, comp):
         if len(comp.mPages) > self.MAX_SIZE:
-            self.log.info('%s %d' % (comp.key, 0))
+            self.log.info('%s %8.5f' % (comp.key, 0))
             return
 
         ordered = []
@@ -98,7 +99,7 @@ class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
 
         self.storeMeaning(comp)
         
-        self.log.info('%s %d' % (comp.key, self.distance(comp.pages, comp.mPages, comp.weights, ordered, bestCandidateEver)))
+        self.log.info('%s %8.5f' % (comp.key, self.distance(comp.pages, comp.mPages, comp.weights, ordered, bestCandidateEver)))
 
     def offspring(self, pages, vertices, edges, ordered, c1, c2):
         cs = set(c1) | set(c2)

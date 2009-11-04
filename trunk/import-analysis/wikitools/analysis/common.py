@@ -82,7 +82,7 @@ class Component:
                 self.merge(self.clusters[fromKey], self.clusters[toKey])
 
     WEIGHT_NORMAL = 1.0
-    WEIGHT_REDIRECT = 0.01
+    WEIGHT_REDIRECT = 0.1
     FACTOR_CATEGORY = 0.8
     FACTOR_LINK = 0.2
 
