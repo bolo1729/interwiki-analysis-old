@@ -17,6 +17,7 @@
 import logging, math, numpy, os, random, scipy.optimize, sys, uuid, wikitools.analysis.common
 
 class SpatialMeaningCalculator(wikitools.analysis.common.AbstractComponentProcessor):
+    NAME = 'spatial'
     AUTH = 'analysis.spatial'
     
     def __init__(self, dataRepository, options):
@@ -45,9 +46,14 @@ class SpatialMeaningCalculator(wikitools.analysis.common.AbstractComponentProces
             links += [link]
         links.sort(lambda x, y: self.cmpLinks(pagePositions, x, y))
 
+        cost = 0
         comp.initClusters()
         for src, dst in links:
             if comp.mergeable(comp.clusters[src], comp.clusters[dst]):
                 comp.merge(comp.clusters[src], comp.clusters[dst])
-        
+            elif comp.clusters[src] != comp.clusters[dst]:
+                cost += comp.weights[(src, dst)]
+
+        self.log.info('Total cost: %s %d' % (comp.key, cost))
+
         self.storeMeaning(comp)

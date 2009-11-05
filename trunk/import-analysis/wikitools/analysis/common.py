@@ -41,8 +41,6 @@ class Component:
         self.initClusters()
         self.updateWeights()
 
-        self.cut = set()
-
     def initClusters(self):
         self.clusters, self.langs, ci = {}, {}, 0
         for pageKey in self.mPages:
@@ -50,6 +48,7 @@ class Component:
             self.clusters[pageKey] = ci
             self.langs[ci] = set([page['lang']])
             ci += 1
+        self.cut = set()
 
     def mergeable(self, ca, cb):
         if ca == cb:

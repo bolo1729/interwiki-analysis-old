@@ -17,6 +17,7 @@
 import logging, math, os, random, sys, uuid, wikitools.analysis.common
 
 class ComponentPainter(wikitools.analysis.common.AbstractComponentProcessor):
+    NAME = 'visualize'
     SCALE = 100.0
     AUTH = 'analysis.genetic'
     WIDTH = 0.4

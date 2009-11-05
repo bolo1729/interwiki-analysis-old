@@ -17,6 +17,7 @@
 import logging, math, os, random, sys, uuid, wikitools.analysis.common, xml.dom.minidom
 
 class ComponentSerializer(wikitools.analysis.common.AbstractComponentProcessor):
+    NAME = 'serialize'
     AUTH = 'analysis.genetic'
 
     def __init__(self, dataRepository, options):

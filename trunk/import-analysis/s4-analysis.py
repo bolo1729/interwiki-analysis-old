@@ -63,8 +63,8 @@ class Analysis:
 
 	def executeCommands(self):
 		self.log.info('Task(s): ' + ' '.join(self.opts.commands))
+		self.doBatch, self.batch = 'batch' in self.opts.switches, []
 		for command in self.opts.commands:
-			
 			if command == 'import':
 				self.execImport()
 			if command == 'positions':
@@ -81,7 +81,20 @@ class Analysis:
 				self.execVisualize()
 			if command == 'serialize':
 				self.execSerialize()
+		if self.doBatch:
+			self.execBatch()
 		self.log.info('Done.')
+
+	def execBatch(self):
+		import wikitools.analysis.batch, wikitools.repo.repository
+		dataRepository = wikitools.repo.repository.PostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password)
+		engine = wikitools.analysis.batch.BatchCalculator(dataRepository, self.opts, self.batch)
+		if not self.opts.components:
+			engine.processAll()
+		else:
+			for compKey in self.opts.components:
+				engine.processComponent(compKey)
+		pass
 
 	def execImport(self):
 		import wikitools.importer, wikitools.repo.bigmemory, wikitools.repo.repository
@@ -96,6 +109,9 @@ class Analysis:
 		importer.doImport()
 
 	def execCommon(self, engineClass):
+		if self.doBatch:
+			self.batch += [engineClass]
+			return
 		import wikitools.repo.repository
 		dataRepository = wikitools.repo.repository.PostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password)
 		engine = engineClass(dataRepository, self.opts)

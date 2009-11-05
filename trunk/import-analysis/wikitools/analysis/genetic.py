@@ -17,6 +17,7 @@
 import logging, math, os, random, sys, wikitools.analysis.common, uuid
 
 class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
+    NAME = 'genetic'
     AUTH = 'analysis.genetic'
     REDIRECT = 0.01
     GEN_SIZE = 100
@@ -94,7 +95,8 @@ class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
 
         self.storeMeaning(comp)
         
-        self.log.info('%s %8.5f' % (comp.key, self.distance(comp.pages, comp.mPages, comp.weights, ordered, bestCandidateEver)))
+        cost = self.distance(comp.pages, comp.mPages, comp.weights, ordered, bestCandidateEver)
+        self.log.info('Total cost: %s %d' % (comp.key, cost))
 
     def offspring(self, pages, vertices, edges, ordered, c1, c2):
         cs = set(c1) | set(c2)
