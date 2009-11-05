@@ -46,6 +46,7 @@ class CliquesMeaningCalculator(wikitools.analysis.common.AbstractComponentProces
             if langs & lookup[ci].langs != set():
                 continue
             w = lookup[ci].sum
+            # self.log.debug('Candidate: %d %s' % (w, str(lookup[ci].pages)))
             if max < w:
                 max, arg = w, ci
         # self.log.debug('Heaviest: ' + str(arg))
@@ -119,6 +120,8 @@ class CliquesMeaningCalculator(wikitools.analysis.common.AbstractComponentProces
         for (fromKey, toKey) in comp.mLinks:
             ciFrom = comp.clusters[fromKey]
             ciTo = comp.clusters[toKey]
+            if ciFrom == ciTo:
+                continue
             w = comp.weights[(fromKey, toKey)]
             lookup[ciFrom].addWeight(ciTo, w)
             lookup[ciTo].addWeight(ciFrom, w)
