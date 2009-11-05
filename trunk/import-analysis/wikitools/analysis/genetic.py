@@ -16,7 +16,7 @@
 
 import logging, math, os, random, sys, wikitools.analysis.common, uuid
 
-class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
+class GeneticMeaningCalculator(wikitools.analysis.common.AbstractComponentProcessor):
     NAME = 'genetic'
     AUTH = 'analysis.genetic'
     REDIRECT = 0.01
@@ -26,7 +26,7 @@ class GeneticCalculator(wikitools.analysis.common.AbstractComponentProcessor):
     STAGNATION = 5
 
     def __init__(self, dataRepository, options):
-        self.log = logging.getLogger('GeneticCalculator')
+        self.log = logging.getLogger('GeneticMeaningCalculator')
         self.dataRepository = dataRepository
         self.options = options
 
