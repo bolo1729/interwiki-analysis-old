@@ -24,6 +24,7 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 	S = 10.0
 	REPULSIVE = 40.0
 
+	MAXITER = 100
 	FASTLANGS = 3
 	BOOST = 10.0
 
@@ -70,7 +71,7 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 
 		if self.timing:
 			import time
-			repeat = 10
+			repeat = 50
 
 			ts = time.time()
 			for _ in xrange(repeat):
@@ -79,14 +80,17 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 			self.log.debug('Function: %8.5f ms' % (1000.0*(te - ts)/repeat))
 
 			ts = time.time()
-			for _ in xrange(10):
+			for _ in xrange(repeat):
 				self.minimizedGradient(initialPositions, comp.pages, revPages, idxLangs, idxLinks, mainLangs)
 			te = time.time()
 			self.log.debug('Gradient: %8.5f ms' % (1000.0*(te - ts)/repeat))
 
 		finalPositions = initialPositions
-		for _ in range(1):
-			finalPositions = scipy.optimize.fmin_bfgs(self.minimizedFunction, finalPositions, self.minimizedGradient, args = (comp.pages, revPages, idxLangs, idxLinks, mainLangs), gtol=1e-1)
+		if self.fastPost:
+			finalPositions = scipy.optimize.fmin_cg(self.minimizedFunction, finalPositions, self.minimizedGradient, args = (comp.pages, revPages, idxLangs, idxLinks, mainLangs), maxiter = self.MAXITER)
+		else:
+			finalPositions = scipy.optimize.fmin_cg(self.minimizedFunction, finalPositions, self.minimizedGradient, args = (comp.pages, revPages, idxLangs, idxLinks, mainLangs))
+
 		pagePositions = {}
 		for idx in range(len(pageKeys)):
 			pagePositions[pageKeys[idx]] = (finalPositions[2*idx + 0], finalPositions[2*idx + 1])
@@ -101,7 +105,6 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 		for aIdx, bIdx in idxLinks:
 			aX = positions[2*aIdx + 0]
 			aY = positions[2*aIdx + 1]
-			
 			bX = positions[2*bIdx + 0]
 			bY = positions[2*bIdx + 1]
 			
@@ -121,7 +124,6 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 						continue
 					aX = positions[2*aIdx + 0]
 					aY = positions[2*aIdx + 1]
-			
 					bX = positions[2*bIdx + 0]
 					bY = positions[2*bIdx + 1]
 
@@ -137,23 +139,26 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 
 	def minimizedGradient(self, positions, pages, revPages, idxLangs, idxLinks, mainLangs):
 		gradient = numpy.array(len(positions) * [0.0])
-
+		
 		for aIdx, bIdx in idxLinks:
 			aX = positions[2*aIdx + 0]
 			aY = positions[2*aIdx + 1]
-			
 			bX = positions[2*bIdx + 0]
 			bY = positions[2*bIdx + 1]
-			
-			r2 = (aX - bX)*(aX - bX) + (aY - bY)*(aY - bY)
+
+			abX = aX - bX
+			abY = aY - bY
+
+			r2 = abX**2 + abY**2
 			r = math.sqrt(r2)
 			weight = idxLinks[(aIdx, bIdx)]
 
-			gradient[2*aIdx + 0] += 2.0 * weight * (aX - bX) / r * (r - self.R)
-			gradient[2*aIdx + 1] += 2.0 * weight * (aY - bY) / r * (r - self.R)
-
-			gradient[2*bIdx + 0] += 2.0 * weight * (bX - aX) / r * (r - self.R)
-			gradient[2*bIdx + 1] += 2.0 * weight * (bY - aY) / r * (r - self.R)
+			tmp = 2.0 * weight / r * (r - self.R)
+			tmpX, tmpY = tmp * abX, tmp * abY
+			gradient[2*aIdx + 0] += tmpX
+			gradient[2*aIdx + 1] += tmpY
+			gradient[2*bIdx + 0] -= tmpX
+			gradient[2*bIdx + 1] -= tmpY
 
 		boost = 1.0
 		if self.fastPos:
@@ -166,11 +171,13 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 						continue
 					aX = positions[2*aIdx + 0]
 					aY = positions[2*aIdx + 1]
-			
 					bX = positions[2*bIdx + 0]
 					bY = positions[2*bIdx + 1]
 
-					r2 = (aX - bX)*(aX - bX) + (aY - bY)*(aY - bY)
+					abX = aX - bX
+					abY = aY - bY
+
+					r2 = abX**2 + abY**2
 					r = math.sqrt(r2)
 					r3 = r * r * r
 					
@@ -180,9 +187,11 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 						gradient[2*bIdx + 0] += 2.0 * boost * self.REPULSIVE * (bX - aX) / r * (r - self.S)
 						gradient[2*bIdx + 1] += 2.0 * boost * self.REPULSIVE * (bY - aY) / r * (r - self.S)
 					else:
-						gradient[2*aIdx + 0] += 1.0 * boost * self.REPULSIVE * (bX - aX) / r3
-						gradient[2*aIdx + 1] += 1.0 * boost * self.REPULSIVE * (bY - aY) / r3
-						gradient[2*bIdx + 0] += 1.0 * boost * self.REPULSIVE * (aX - bX) / r3
-						gradient[2*bIdx + 1] += 1.0 * boost * self.REPULSIVE * (aY - bY) / r3
+						tmp = 1.0 * boost * self.REPULSIVE / r3
+						tmpX, tmpY = tmp * abX, tmp * abY
+						gradient[2*aIdx + 0] -= tmpX
+						gradient[2*aIdx + 1] -= tmpY
+						gradient[2*bIdx + 0] += tmpX
+						gradient[2*bIdx + 1] += tmpY
 
 		return gradient
