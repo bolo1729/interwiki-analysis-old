@@ -18,13 +18,13 @@ import logging, math, numpy, random, scipy.optimize, wikitools.analysis.common
 
 class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcessor):
 	NAME = 'positions'
-	
+
 	INITBOX = 100.0
 	R = 1.0
 	S = 10.0
 	REPULSIVE = 40.0
 
-	MAXITER = 100
+	MAXITER = 80
 	FASTLANGS = 3
 	BOOST = 10.0
 
@@ -86,7 +86,7 @@ class PagePositionCalculator(wikitools.analysis.common.AbstractComponentProcesso
 			self.log.debug('Gradient: %8.5f ms' % (1000.0*(te - ts)/repeat))
 
 		finalPositions = initialPositions
-		if self.fastPost:
+		if self.fastPos:
 			finalPositions = scipy.optimize.fmin_cg(self.minimizedFunction, finalPositions, self.minimizedGradient, args = (comp.pages, revPages, idxLangs, idxLinks, mainLangs), maxiter = self.MAXITER)
 		else:
 			finalPositions = scipy.optimize.fmin_cg(self.minimizedFunction, finalPositions, self.minimizedGradient, args = (comp.pages, revPages, idxLangs, idxLinks, mainLangs))
