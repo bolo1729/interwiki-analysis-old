@@ -123,12 +123,20 @@ class Component:
             self.weights[(fromKey, toKey)] = 1
 
 class AbstractComponentProcessor:
-    LIMIT = 300
+    SMALL = 300
+    MEDIUM = 1000
+    BIG = 10000
     
     def processAll(self):
         self.dataRepository.connect()
-        if 'no-big' in self.options.switches:
-            incoherent = self.dataRepository.getIncoherent(self.LIMIT)
+        if 'small-only' in self.options.switches:
+            incoherent = self.dataRepository.getIncoherent(3, self.SMALL)
+        elif 'medium-only' in self.options.switches:
+            incoherent = self.dataRepository.getIncoherent(self.SMALL + 1, self.MEDIUM)
+        elif 'big-only' in self.options.switches:
+            incoherent = self.dataRepository.getIncoherent(self.MEDIUM + 1, self.BIG)
+        elif 'huge-only' in self.options.switches:
+            incoherent = self.dataRepository.getIncoherent(self.BIG + 1)
         else:
             incoherent = self.dataRepository.getIncoherent()
         self.dataRepository.disconnect()

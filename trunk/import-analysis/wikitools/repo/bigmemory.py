@@ -238,12 +238,14 @@ class BigMemoryPostgresqlRepository:
 	def insertCategorylink(self, fromKey, toKey):
 		self.cursor.execute('INSERT INTO network_categorylink (page_id, category_id) VALUES (%s, %s)', (fromKey, toKey))
 
-	def getIncoherent(self, limit = None):
+	def getIncoherent(self, lowest = None, highest = None):
 		cur = self.conn.cursor()
-		if not limit:
-			cur.execute('SELECT key FROM network_comp WHERE NOT coherent')
+		if not lowest and not highest:
+			cur.execute('SELECT key FROM network_comp WHERE NOT coherent ORDER BY key')
+		elif not highest:
+			cur.execute('SELECT key FROM network_comp WHERE NOT coherent AND size >= %s ORDER BY key', (lowest,))
 		else:
-			cur.execute('SELECT key FROM network_comp WHERE NOT coherent AND size <= %s', (limit,))
+			cur.execute('SELECT key FROM network_comp WHERE NOT coherent AND size >= %s AND size <= %s ORDER BY key', (lowest,highest))
 		rows = cur.fetchall()
 		cur.close()
 		keys = []
