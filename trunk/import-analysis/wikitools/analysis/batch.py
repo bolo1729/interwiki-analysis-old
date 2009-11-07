@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging, math, os, random, sys, wikitools.analysis.common, uuid
+import logging, math, os, random, sys, time, wikitools.analysis.common, uuid
 
 class BatchCalculator(wikitools.analysis.common.AbstractComponentProcessor):
     NAME = 'batch'
@@ -32,4 +32,8 @@ class BatchCalculator(wikitools.analysis.common.AbstractComponentProcessor):
         for engine in self.engines:
             self.log.info('Running: ' + engine.NAME)
             comp.initClusters()
+            startTime = time.time()
             engine.doProcess(comp)
+            stopTime = time.time()
+            totalTime = (stopTime - startTime) * 1000.0
+            self.log.info('Running time for %s: %1.f ms' % (engine.NAME, totalTime))

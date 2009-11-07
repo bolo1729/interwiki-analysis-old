@@ -75,6 +75,8 @@ class Analysis:
 				self.execSpatial()
 			if command == 'betweenness':
 				self.execBetweenness()
+			if command == 'newman-girvan':
+				self.execNewmanGirvan()
 			if command == 'genetic':
 				self.execGenetic()
 			if command == 'random':
@@ -138,6 +140,11 @@ class Analysis:
 	def execBetweenness(self):
 		import wikitools.analysis.betweenness
 		self.execCommon(wikitools.analysis.betweenness.BetweennessMeaningCalculator)
+
+	def execNewmanGirvan(self):
+		import wikitools.analysis.betweenness
+		self.execCommon(wikitools.analysis.betweenness.NewmanGirvanMeaningCalculator)
+
 
 	def execGenetic(self):
 		import wikitools.analysis.genetic

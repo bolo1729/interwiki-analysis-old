@@ -55,10 +55,10 @@ class Component:
             return False
         return self.langs[ca] & self.langs[cb] == set()
 
-    def merge(self, ca, cb):
+    def merge(self, ca, cb, force = False):
         if ca == cb:
             return
-        if self.langs[ca] & self.langs[cb] != set():
+        if not force and self.langs[ca] & self.langs[cb] != set():
             raise Exception, 'Incoherent cluster after merge'
         for pageKey in self.mPages:
             if self.clusters[pageKey] == cb:
@@ -66,7 +66,7 @@ class Component:
         self.langs[ca] |= self.langs[cb]
         del self.langs[cb]
     
-    def setCut(self, cut):
+    def setCut(self, cut, force = False):
         self.cut = cut
 
         self.clusters, self.langs, ci = {}, {}, 0
@@ -78,7 +78,7 @@ class Component:
 
         for (fromKey, toKey) in self.mLinks:
             if not (fromKey, toKey) in self.cut:
-                self.merge(self.clusters[fromKey], self.clusters[toKey])
+                self.merge(self.clusters[fromKey], self.clusters[toKey], force)
 
     WEIGHT_NORMAL = 1.0
     WEIGHT_REDIRECT = 0.1
