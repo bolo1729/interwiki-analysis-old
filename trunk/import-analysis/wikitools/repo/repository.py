@@ -168,9 +168,9 @@ class PostgresqlRepository:
 	def getIncoherent(self, limit = None):
 		cur = self.conn.cursor()
 		if not limit:
-			cur.execute('SELECT key FROM network_comp WHERE NOT coherent')
+			cur.execute('SELECT key FROM network_comp WHERE NOT coherent ORDER BY key')
 		else:
-			cur.execute('SELECT key FROM network_comp WHERE NOT coherent AND size <= %s', (limit,))
+			cur.execute('SELECT key FROM network_comp WHERE NOT coherent AND size <= %s ORDER BY key', (limit,))
 		rows = cur.fetchall()
 		cur.close()
 		keys = []
