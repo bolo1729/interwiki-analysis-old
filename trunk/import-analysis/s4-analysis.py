@@ -81,6 +81,8 @@ class Analysis:
 				self.execGenetic()
 			if command == 'random':
 				self.execRandom()
+			if command == 'stats':
+				self.execStats()
 			if command == 'visualize':
 				self.execVisualize()
 			if command == 'serialize':
@@ -145,7 +147,6 @@ class Analysis:
 		import wikitools.analysis.betweenness
 		self.execCommon(wikitools.analysis.betweenness.NewmanGirvanMeaningCalculator)
 
-
 	def execGenetic(self):
 		import wikitools.analysis.genetic
 		self.execCommon(wikitools.analysis.genetic.GeneticMeaningCalculator)
@@ -153,6 +154,10 @@ class Analysis:
 	def execRandom(self):
 		import wikitools.analysis.rand
 		self.execCommon(wikitools.analysis.rand.RandomMeaningCalculator)
+
+	def execStats(self):
+		import wikitools.analysis.stats
+		self.execCommon(wikitools.analysis.stats.StatsCalculator)
 
 	def execVisualize(self):
 		import wikitools.analysis.visual
