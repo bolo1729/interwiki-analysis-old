@@ -17,6 +17,10 @@ Download the relevant dumps using this script:
 
 == Step 2: Import the dumps to the database ==
 
-Import the dumps to the database and run analysis.
-For example:
-  ./s2-analysis.py -d wikidb -u wikiuser -r import,genetic,visualize
+Import the dumps to the database:
+  ./s4-analysis.py -d wikidb -u wikiuser -r import
+
+== Step 3: Run analysis ==
+
+Run analysis.  For example:
+  ./s4-analysis.py -d wikidb -u wikiuser -o results/ -s batch,common-cats,medium-only -r genetic,skel-vis,serialize
