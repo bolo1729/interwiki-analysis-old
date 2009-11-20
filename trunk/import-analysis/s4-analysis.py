@@ -85,6 +85,8 @@ class Analysis:
 				self.execStats()
 			if command == 'visualize':
 				self.execVisualize()
+			if command == 'skel-vis':
+				self.execSkelVis()
 			if command == 'serialize':
 				self.execSerialize()
 		if self.doBatch:
@@ -162,6 +164,10 @@ class Analysis:
 	def execVisualize(self):
 		import wikitools.analysis.visual
 		self.execCommon(wikitools.analysis.visual.ComponentPainter)
+
+	def execSkelVis(self):
+		import wikitools.analysis.skeleton
+		self.execCommon(wikitools.analysis.skeleton.SkeletonPainter)
 
 	def execSerialize(self):
 		import wikitools.analysis.serializer
