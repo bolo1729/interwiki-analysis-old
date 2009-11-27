@@ -25,7 +25,7 @@ class InterwikiAnalysisCommit:
 
 
 
-    def processMeaning(self, compId, namespace, meaning):
+    def processMeaning(self, compId, namespace, activeLangs, meaning):
         if self.opts.verbose:
             niceText = '[' + ', '.join(map(lambda p: p[0] + ':' + p[1], meaning)) + ']'
             print 'DEBUG: Processing meaning: %s' % (niceText,)
@@ -34,6 +34,8 @@ class InterwikiAnalysisCommit:
         pages = {}
         for page in meaning:
             lang, title = page
+            if not lang in activeLangs:
+                continue
             site = wikipedia.getSite(lang)
             page = wikipedia.Page(site, title, site, namespace)
             if self.opts.verbose:
@@ -80,6 +82,20 @@ class InterwikiAnalysisCommit:
 
 
 
+    def dropInactive(self, langs):
+        activeLangs = set()
+        for lang in langs:
+            try:
+                if wikipedia.getSite(lang):
+                    activeLangs |= set([lang])
+            except wikipedia.NoSuchSite:
+                if self.opts.verbose:
+                    print 'DEBUG: Ignoring inactive lang: %s' % (lang,)
+                pass
+        return activeLangs
+
+
+
     def parseFile(self):
         dom = xml.dom.minidom.parse(self.opts.file)
         xComponent = dom.documentElement
@@ -87,7 +103,7 @@ class InterwikiAnalysisCommit:
         compId = xComponent.getAttribute('id')
         namespace = int(xComponent.getAttribute('namespace'))
 
-        meanings = []
+        meanings, encounteredLangs = [], set()
         for xCluster in xComponent.childNodes:
             if xCluster.nodeType != xml.dom.Node.ELEMENT_NODE:
                 continue
@@ -108,14 +124,15 @@ class InterwikiAnalysisCommit:
                 # Now we know we've got a non-redirect page
     
                 lang = xPage.getAttribute('lang')
+                encounteredLangs |= set([lang])
                 title = xPage.getAttribute('title')
                 if lang in langs:
                     print 'ERROR: Incoherent XML file, two or more non-redirect pages in language: %s' % (lang,)
-                    return
+                    return (compId, namespace, [], [])
                 langs |= set([lang])
                 meaning += [(lang, title)]
             meanings += [meaning]
-        return (compId, namespace, meanings)
+        return (compId, namespace, encounteredLangs, meanings)
 
 
 
@@ -130,9 +147,10 @@ class InterwikiAnalysisCommit:
             optionParser.print_help()
             return
 
-        (compId, namespace, meanings) = self.parseFile()
+        (compId, namespace, langs, meanings) = self.parseFile()
+        langs = self.dropInactive(langs)
         for meaning in meanings:
-            self.processMeaning(compId, namespace, meaning)
+            self.processMeaning(compId, namespace, langs, meaning)
 
 
 
