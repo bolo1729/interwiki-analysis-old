@@ -1,18 +1,50 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-"""
-Commits results of interwiki analyses obtained using this code:
-  http://code.google.com/p/interwiki-analysis/
+"""Commits results of an externally conducted interwiki analysis.
 
-Author:
-* Lukasz Bolikowski (Bolo1729)
+The script reads an XML file describing directions for a given
+set of pages, and adds/changes/removes interwiki links
+in accordance with the directions.
+
+An input XML file should contain a partition of a set of pages
+into clusters.  Example:
+
+  <?xml version="1.0" encoding="UTF-8"?>
+  <component id="0dd602cb-fde0-5eff-aa33-4eb1635b6fe9" namespace="14">
+    <cluster>
+      <page lang="en" title="Transportation in Costa Rica"/>
+      <page lang="id" title="Transportasi di Kosta Rika"/>
+      <page lang="it" title="Trasporti in Costa Rica"/>
+    </cluster>
+    <cluster>
+      <page lang="id" title="Transportasi di Amerika Tengah"/>
+    </cluster>
+  </component>
+
+The script makes sure that any given page contains interwiki
+links to all the other pages in the same cluster, and contains
+no other interwiki links.
+
+The script can run in "dry run" mode, in which no changes to
+any page are actually made.  For a list of options, run the
+script with '--help' option.
+
+Here's a tool generating interwiki analyses in the format
+accepted by this script:
+  http://code.google.com/p/interwiki-analysis/
 """
 
 import optparse, wikipedia, xml.dom.minidom
 
+__author__ = 'Lukasz Bolikowski'
+__license__ = 'GNU GPL version 3'
+__version__ = '1.0'
+
 class InterwikiAnalysisCommit:
+    """Commits results of an externally conducted interwiki analysis."""
 
     def reportMods(self, add, change, remove):
+        """Generates an edit summary."""
         msg = []
         if add:
             msg += ['adding: (%s)' % (', '.join(sorted(add)),)]
@@ -26,6 +58,7 @@ class InterwikiAnalysisCommit:
 
 
     def processMeaning(self, compId, namespace, activeLangs, meaning):
+        """Updates all the pages in a given cluster."""
         if self.opts.verbose:
             niceText = '[' + ', '.join(map(lambda p: p[0] + ':' + p[1], meaning)) + ']'
             print 'DEBUG: Processing meaning: %s' % (niceText,)
@@ -48,12 +81,13 @@ class InterwikiAnalysisCommit:
                 return
             pages[site] = page
 
-        # Update pages
+        # Process each page
         for page in pages.values():
             interwiki = {}
             for p in page.interwiki():
                 interwiki[p.site()] = p
 
+            # Find interwikis to add/change/remove
             add, change, remove = [], [], []
             for site in interwiki:
                 if not site in pages:
@@ -72,8 +106,12 @@ class InterwikiAnalysisCommit:
             for site in otherPages:
                 if not site in interwiki:
                     add += [str(site.language())]
+
+            # Check if update needed
             if not add and not change and not remove:
                 continue
+            
+            # Update the page
             comment = self.reportMods(add, change, remove)
             print 'INFO: page: %s %s' % (page, comment)
             if not self.opts.dry:
@@ -83,6 +121,7 @@ class InterwikiAnalysisCommit:
 
 
     def dropInactive(self, langs):
+        """Filters out the inactive language editions."""
         activeLangs = set()
         for lang in langs:
             try:
@@ -97,6 +136,7 @@ class InterwikiAnalysisCommit:
 
 
     def parseFile(self):
+        """Parses the XML file specified in cmdline options."""
         dom = xml.dom.minidom.parse(self.opts.file)
         xComponent = dom.documentElement
 
@@ -137,19 +177,23 @@ class InterwikiAnalysisCommit:
 
 
     def main(self):
+        """Main routine."""
+
+        # Parse command line options
         optionParser = optparse.OptionParser()
         optionParser.add_option('-f', '--file', dest='file', default=None, help='read analysis results from FILE')
         optionParser.add_option('-n', '--dry-run', action='store_true', dest='dry', default=False, help='do not make any changes')
         optionParser.add_option('-v', '--verbose', action='store_true', dest='verbose', default=False, help='be verbose')
-    
         (self.opts, _) = optionParser.parse_args()
         if not self.opts.file:
             optionParser.print_help()
             return
 
+        # Parse the XML file
         (compId, namespace, langs, meanings) = self.parseFile()
         langs = self.dropInactive(langs)
         for meaning in meanings:
+            # Update pages in the given cluster
             self.processMeaning(compId, namespace, langs, meaning)
 
 
