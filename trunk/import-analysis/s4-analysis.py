@@ -112,7 +112,7 @@ class Analysis:
 		if doBigMemory:
 			dataRepository = wikitools.repo.bigmemory.BigMemoryPostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password)
 		else:
-			dataRepository = wikitools.repo.repository.PostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password)
+			dataRepository = wikitools.repo.repository.PostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password, cache = True)
 		importer = wikitools.importer.Importer(dataSource, dataRepository, doMemoryProfile)
 		importer.doImport()
 

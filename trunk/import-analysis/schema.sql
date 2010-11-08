@@ -1,4 +1,13 @@
 BEGIN;
+DROP TABLE IF EXISTS "network_comp" CASCADE;
+DROP TABLE IF EXISTS "network_page" CASCADE;
+DROP TABLE IF EXISTS "network_langlink" CASCADE;
+DROP TABLE IF EXISTS "network_pagelink" CASCADE;
+DROP TABLE IF EXISTS "network_categorylink" CASCADE;
+DROP TABLE IF EXISTS "network_path" CASCADE;
+DROP TABLE IF EXISTS "network_pageposition" CASCADE;
+DROP TABLE IF EXISTS "network_pagemeaning" CASCADE;
+
 CREATE TABLE "network_comp" (
     "key" varchar(36) NOT NULL PRIMARY KEY,
     "namespace" integer NOT NULL,

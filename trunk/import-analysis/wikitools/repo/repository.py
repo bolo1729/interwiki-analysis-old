@@ -1,5 +1,5 @@
 # Interwiki analysis tools
-# Copyright (C) 2007-2009  Lukasz Bolikowski
+# Copyright (C) 2007-2010  Lukasz Bolikowski
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging, uuid
+from ..memoptpy import HashIntDict, CollisionError
 
 class PostgresqlRepository:
-	def __init__(self, host = None, port = None, database = None, user = None, password = None, cache = False):
+	def __init__(self, host = None, port = None, database = None, user = None, password = None, cache = False, acFreq = 32768):
 		self.dbHost = host
 		self.dbPort = port
 		self.dbDatabase = database
@@ -25,8 +26,12 @@ class PostgresqlRepository:
 		self.dbPassword = password
 		self.log = logging.getLogger('PostgresqlRepository')
 		self.cache = cache
-		self.pages = {}
-		self.pageKeys = {}
+		if self.cache:
+			self.keyCache = {}
+			self.redirectCache = {}
+			self.namespaceCache = {}
+		self.acCounter = 0
+		self.acFreq = acFreq
 
 	def connect(self):
 		args = {}
@@ -52,12 +57,26 @@ class PostgresqlRepository:
 		self.conn.close()
 		(self.cursor, self.conn) = (None, None)
 
+	def checkAutoCommit(self):
+		self.acCounter += 1
+		if self.acCounter < self.acFreq:
+			return
+		self.acCounter = 0
+		self.cursor.close()
+		self.conn.commit()
+		self.cursor = self.conn.cursor()
+
 	def getPageKey(self, lang, namespace, title):
 		if self.cache:
-			tmp = lang + ":" + namespace + ":" + title.encode('utf-8')
-			if tmp in self.pageKeys:
-				return self.pageKeys[tmp]
-			return None
+			dict = lang + '#' + str(namespace)
+			if not dict in self.keyCache:
+				return None
+			try:
+				return lang + ':' + str(self.keyCache[dict][title.encode('utf-8')])
+			except KeyError:
+				return None
+			except CollisionError:
+				pass
 		cur = self.conn.cursor()
 		cur.execute('SELECT key FROM network_page WHERE lang = %s AND namespace = %s AND title = %s', (lang, namespace, title))
 		row = cur.fetchone()
@@ -68,14 +87,19 @@ class PostgresqlRepository:
 
 	def getPage(self, key):
 		if self.cache:
-			if key in self.pages:
-				tmp = self.pages[key]
-				lang = key.split(":")[0]
-				namespace = tmp[0].split(":")[1]
-				title = ":".join(tmp[0].split(":")[2:])
-				redirect = tmp[1]
-				return {'key': key, 'lang': lang, 'namespace': namespace, 'title': title.decode('utf-8'), 'redirect': redirect}
-			return None
+			lang, id = key.split(':')
+			if not lang in self.namespaceCache:
+				return None
+			try:
+				namespace = self.namespaceCache[lang][int(id)]
+				redirect = self.redirectCache[lang].get(int(id))
+				if redirect is not None:
+					redirect = lang + ':' + str(redirect)
+				return {'key': key, 'lang': lang, 'namespace': namespace, 'title': None, 'redirect': redirect}
+			except KeyError:
+				return None
+			except CollisionError:
+				pass
 		cur = self.conn.cursor()
 		cur.execute('SELECT lang, namespace, title, redirect_id FROM network_page WHERE key = %s', (key,))
 		row = cur.fetchone()
@@ -85,25 +109,53 @@ class PostgresqlRepository:
 		return {'key': key, 'lang': row[0], 'namespace': row[1], 'title': row[2], 'redirect': row[3]}
 
 	def insertPage(self, lang, id, namespace, title):
-		key = lang + ':' + id
 		if self.cache:
-			key = intern(key)
-			tmp = lang + ":" + namespace + ":" + title.encode('utf-8')
-			self.pageKeys[tmp] = key
-			self.pages[key] = (tmp, None)
+			dict = lang + '#' + str(namespace)
+			if not dict in self.keyCache:
+				self.keyCache[dict] = HashIntDict(checking = HashIntDict.CHK_SHOUTING)
+				self.namespaceCache[lang] = HashIntDict(checking = HashIntDict.CHK_IGNORING)
+				self.redirectCache[lang] = HashIntDict(checking = HashIntDict.CHK_IGNORING)
+
+			## Alternative:
+			# h = hash(title.encode('utf-8')) & ((1 << 31) - 1)
+			# if int(namespace) == 0:
+			# 	h &= -2
+			# else:
+			# 	h |= 1
+
+			try:
+				self.keyCache[dict][title.encode('utf-8')] = int(id)
+				self.namespaceCache[lang][int(id)] = int(namespace)
+			except CollisionError:
+				pass
+		key = lang + ':' + id
 		self.cursor.execute('INSERT INTO network_page (key, lang, namespace, title) VALUES (%s, %s, %s, %s)', (key, lang, namespace, title))
+		self.checkAutoCommit()
 
 	def insertRedirect(self, fromKey, toKey):
-		if self.cache and (fromKey in self.pages):
-			self.pages[fromKey] = (self.pages[fromKey][0], intern(toKey))
+		if self.cache:
+			fromLang, fromId = fromKey.split(':')
+			toLang, toId = toKey.split(':')
+			self.redirectCache[fromLang][int(fromId)] = int(toId)
 		self.cursor.execute('UPDATE network_page SET redirect_id = %s WHERE key = %s', (toKey, fromKey))
+		self.checkAutoCommit()
 
 	def removeDoubleRedirects(self):
+		if self.cache:
+			for lang in self.redirectCache:
+				toRemove = []
+				curCache = self.redirectCache[lang]
+				for fromId, toId in curCache.iteritems():
+					if toId in curCache:
+						toRemove += [fromId]
+				for id in toRemove:
+					del curCache[id]
 		self.cursor.execute('UPDATE network_page SET redirect_id = NULL WHERE key IN (SELECT DISTINCT a.redirect_id AS r FROM (SELECT * FROM network_page WHERE redirect_id IS NOT NULL) AS a JOIN network_page AS b ON (a.redirect_id = b.key) WHERE b.redirect_id IS NOT NULL)')
-
+		self.checkAutoCommit()
 
 	def insertLanglink(self, fromKey, toKey):
 		self.cursor.execute('INSERT INTO network_langlink (src_id, dst_id) VALUES (%s, %s)', (fromKey, toKey))
+		self.checkAutoCommit()
 
 	def findConnectedComponents(self):
 		while True:
@@ -161,9 +213,11 @@ class PostgresqlRepository:
 
 	def insertPagelink(self, fromKey, toKey):
 		self.cursor.execute('INSERT INTO network_pagelink (src_id, dst_id) VALUES (%s, %s)', (fromKey, toKey))
+		self.checkAutoCommit()
 
 	def insertCategorylink(self, fromKey, toKey):
 		self.cursor.execute('INSERT INTO network_categorylink (page_id, category_id) VALUES (%s, %s)', (fromKey, toKey))
+		self.checkAutoCommit()
 
 	def getIncoherent(self, lowest = None, highest = None):
 		cur = self.conn.cursor()
@@ -208,9 +262,11 @@ class PostgresqlRepository:
 
 	def deletePagePositions(self, compKey):
 		self.cursor.execute('DELETE FROM network_pageposition WHERE comp_id = %s', (compKey,))
+		self.checkAutoCommit()
 
 	def insertPagePosition(self, pageKey, compKey, position):
 		self.cursor.execute('INSERT INTO network_pageposition (page_id, x, y, z, comp_id) VALUES (%s, %s, %s, %s, %s)', (pageKey, str(position[0]), str(position[1]), str(position[2]), compKey))
+		self.checkAutoCommit()
 	
 	def getComponentPagePositions(self, compKey):
 		cur = self.conn.cursor()
@@ -226,10 +282,12 @@ class PostgresqlRepository:
 
 	def deletePageMeanings(self, auth, compKey):
 		self.cursor.execute('DELETE FROM network_pagemeaning WHERE comp_id = %s AND auth = %s', (compKey, auth))
+		self.checkAutoCommit()
 
 	def insertPageMeanings(self, auth, meaningKey, compKey, pageKeys):
 		for pageKey in pageKeys:
 			self.cursor.execute('INSERT INTO network_pagemeaning (auth, page_id, meaning, comp_id) VALUES (%s, %s, %s, %s)', (auth, pageKey, meaningKey, compKey))
+			self.checkAutoCommit()
 
 	def getComponentPageMeanings(self, compKey, auth):
 		cur = self.conn.cursor()

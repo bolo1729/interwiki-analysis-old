@@ -1,6 +1,6 @@
 #!/bin/bash
 # Interwiki analysis tools
-# Copyright (C) 2007-2009  Lukasz Bolikowski
+# Copyright (C) 2007-2010  Lukasz Bolikowski
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

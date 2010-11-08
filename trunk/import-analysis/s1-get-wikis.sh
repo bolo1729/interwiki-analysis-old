@@ -1,6 +1,6 @@
 #!/bin/bash
 # Interwiki analysis tools
-# Copyright (C) 2007-2009  Lukasz Bolikowski
+# Copyright (C) 2007-2010  Lukasz Bolikowski
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 LANGUAGES="en de fr pl ja it nl pt es ru sv zh no fi ca uk tr cs hu ro vo eo da sk id ar ko he lt vi sl sr bg et fa hr simple ht new nn gl th te el ms eu ceb mk hi ka la bs lb br is bpy mr sq az cy sh tl lv pms bn be_x_old jv ta oc io be su nds an scn nap ku ast af fy wa sw zh_yue qu bat_smg ur cv ksh ml tg ga vec roa_tara uz gd war kn mi pam yo yi nah co lmo gu hsb zh_min_nan roa_rup glk als li ia hy sah kk sa wuu tk tt nds_nl fo nrm vls fiu_vro am os rm map_bms pag dv se gan diq ne fur sco mn lij gv nov bar bh arz mt ilo pi zh_classical km frp lad csb mzn pdc kw ang haw si ug to bcl sc ps ie szl kv gn pa mg ln my stq hif wo jbo crh tpi ty arc cbk_zam ky eml zea srn ay ext myv hak ig pap or so kg kab lo rmy ba mo sm ce udm av ks kaa tet cu sd mdf bo got iu dsb nv na bm cdo chr ee om as pnt pih zu ti ts kl ss ab bi cr ve dz ch ha xh tn bug ik bxr st rw xal za tw chy ak ny fj ff sn sg lbe rn ki lg tum ng ii cho mh aa kj ho mus kr hz tokipona"
 
 # All editions as of 2010-09-28
-LANGUAGES="en de fr pl it ja es nl pt ru sv zh ca no fi uk hu cs ro tr ko da ar eo id vi sr vo lt sk he bg fa sl war hr et ms new simple gl th roa-rup nn eu hi el ht te la ka mk ceb az tl br sh mr lb jv lv bs is cy pms be-x-old sq bpy ta be an oc bn sw io ksh fy gu lmo nds af scn qu ku ur su zh-yue ml ast nap bat-smg wa ga cv hy yo kn tg roa-tara vec pnb gd yi zh-min-nan uz pam tt os ne sah als mi kk arz nah li hsb glk co gan ia am mn bcl fiu-vro nds-nl fo tk vls si sa bar sco gv dv nrm pag rm my map-bms diq ckb se wuu mzn ug fur lij mt bh nov mg csb sc ilo zh-classical km lad pi ang cbk-zam bo frp hif hak pa kw ps xal pdc szl haw ie stq crh fj kv to ace so nv myv gn krc ln ky ext mhr arc jbo eml wo ay pcd kab ty tpi frr ba pap zea srn kl udm ce ig or dsb kg lo ab rmy cu mwl mdf kaa sm mo av tet sn ks got sd na bm pih pnt iu chr ik as bi cdo ee ss om za bug ti ts ve zu ha dz sg ch cr ak xh rw tn ki bxr ny lbe st tw rn chy ff tum lg ng ii cho mh aa kj ho mus kr hz"
+LANGUAGES="en de fr pl it ja es nl pt ru sv zh ca no fi uk hu cs ro tr ko da ar eo id vi sr vo lt sk he bg fa sl war hr et ms new simple gl th roa_rup nn eu hi el ht te la ka mk ceb az tl br sh mr lb jv lv bs is cy pms be_x_old sq bpy ta be an oc bn sw io ksh fy gu lmo nds af scn qu ku ur su zh_yue ml ast nap bat_smg wa ga cv hy yo kn tg roa_tara vec pnb gd yi zh_min_nan uz pam tt os ne sah als mi kk arz nah li hsb glk co gan ia am mn bcl fiu_vro nds_nl fo tk vls si sa bar sco gv dv nrm pag rm my map_bms diq ckb se wuu mzn ug fur lij mt bh nov mg csb sc ilo zh_classical km lad pi ang cbk_zam bo frp hif hak pa kw ps xal pdc szl haw ie stq crh fj kv to ace so nv myv gn krc ln ky ext mhr arc jbo eml wo ay pcd kab ty tpi frr ba pap zea srn kl udm ce ig or dsb kg lo ab rmy cu mwl mdf kaa sm mo av tet sn ks got sd na bm pih pnt iu chr ik as bi cdo ee ss om za bug ti ts ve zu ha dz sg ch cr ak xh rw tn ki bxr ny lbe st tw rn chy ff tum lg ng ii cho mh aa kj ho mus kr hz"
 
 function error {
   echo "Please install curl and wget before running this script"
