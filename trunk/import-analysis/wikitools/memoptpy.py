@@ -126,8 +126,14 @@ class IntSet:
 		>>> for e in s: t += e
 		>>> t
 		9
+		>>> s = IntSet()
+		>>> l = []
+		>>> for i in xrange(2000): s.add(i*i)
+		>>> for i in s: l += ([i] if i*i in s else [])
+		>>> l == [i*i for i in range(45)]
+		True
 		"""
-		for b in self.__blocks:
+		for b in self.__blocks.keys():
 			block = self.__blocks[b]
 			n = len(block)
 			for p in xrange(n):
@@ -356,8 +362,14 @@ class HashIntDict:
 		>>> for k in d: s += d[k]
 		>>> s
 		-3
+		>>> d = HashIntDict()
+		>>> l = []
+		>>> for i in xrange(2000): d[i] = i*i
+		>>> for i in d: l += ([i] if i*i in d else [])
+		>>> l == range(45)
+		True
 		"""
-		for b in self.__blocks:
+		for b in self.__blocks.keys():
 			block = self.__blocks[b]
 			n = len(block) // 2
 			for p in xrange(n):
