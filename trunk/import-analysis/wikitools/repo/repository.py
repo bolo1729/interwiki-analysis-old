@@ -159,57 +159,55 @@ class PostgresqlRepository:
 
 	def findConnectedComponents(self):
 		while True:
-			cur = self.conn.cursor()
-			cur.execute('SELECT src_id FROM network_langlink WHERE comp_id IS NULL LIMIT 1')
-			row = cur.fetchone()
-			cur.close()
+			self.cursor.execute('SELECT src_id FROM network_langlink WHERE comp_id IS NULL LIMIT 1')
+			row = self.cursor.fetchone()
 
 			if not row:
 				break
 
 			compKey = str(uuid.uuid4())
-			cur = self.conn.cursor()
 			sourceKey = row[0]
 			sourcePage = self.getPage(sourceKey)
 			sourceNamespace = sourcePage['namespace']
-			cur.execute('INSERT INTO network_comp (key, namespace) VALUES (%s, %s)', (compKey, sourceNamespace))
-			cur.execute('UPDATE network_page SET comp_id = %s WHERE key = %s', (compKey, sourceKey))
+			self.cursor.execute('INSERT INTO network_comp (key, namespace) VALUES (%s, %s)', (compKey, sourceNamespace))
+			self.cursor.execute('UPDATE network_page SET comp_id = %s WHERE key = %s', (compKey, sourceKey))
 			while True:
-				cur.execute('UPDATE network_langlink '
+				self.cursor.execute('UPDATE network_langlink '
 					+ ' SET comp_id = %s '
 					+ ' WHERE src_id IN (SELECT key FROM network_page WHERE comp_id = %s)',
 					(compKey, compKey))
-				cur.execute('UPDATE network_langlink '
+				self.cursor.execute('UPDATE network_langlink '
 					+ ' SET comp_id = %s '
 					+ ' WHERE dst_id IN (SELECT key FROM network_page WHERE comp_id = %s)',
 					(compKey, compKey))
 				updatedPages = 0
-				cur.execute('UPDATE network_page '
+				self.cursor.execute('UPDATE network_page '
 					+ ' SET comp_id = %s '
 					+ ' WHERE (comp_id IS NULL) AND key IN '
 					+ '   (SELECT src_id AS k FROM network_langlink WHERE comp_id = %s '
 					+ '   UNION SELECT dst_id AS k FROM network_langlink WHERE comp_id = %s '
 					+ '   UNION SELECT redirect_id AS k FROM network_page WHERE comp_id = %s)',
 					(compKey, compKey, compKey, compKey))
-				updatedPages += cur.rowcount
-				cur.execute('UPDATE network_page '
+				updatedPages += self.cursor.rowcount
+				self.cursor.execute('UPDATE network_page '
 					+ ' SET comp_id = %s '
 					+ ' WHERE (comp_id IS NULL) AND redirect_id IN '
 					+ '   (SELECT key AS k FROM network_page WHERE comp_id = %s)',
 					(compKey, compKey))
-				updatedPages += cur.rowcount
+				updatedPages += self.cursor.rowcount
 				if updatedPages == 0:
 					break
+				self.checkAutoCommit()
 
-			cur.execute('UPDATE network_comp SET '
+			self.cursor.execute('UPDATE network_comp SET '
 				+ ' coherent = (SELECT COUNT(*) = 0 AS answer '
 				+ '   FROM (SELECT lang AS c FROM network_page '
 				+ '     WHERE comp_id = %s AND redirect_id IS NULL '
 				+ '     GROUP BY lang HAVING COUNT(*) > 1) AS foo),'
 				+ ' size = (SELECT COUNT(*) FROM network_page WHERE comp_id = %s AND redirect_id IS NULL) '
 				+ ' WHERE key = %s', (compKey, compKey, compKey))
+			self.checkAutoCommit()
 
-			cur.close()
 
 	def insertPagelink(self, fromKey, toKey):
 		self.cursor.execute('INSERT INTO network_pagelink (src_id, dst_id) VALUES (%s, %s)', (fromKey, toKey))

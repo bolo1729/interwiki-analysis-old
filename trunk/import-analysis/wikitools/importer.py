@@ -180,11 +180,11 @@ class Importer:
 			self.dataSource.importTable(lang, 'categorylinks', lambda r : self.processCategorylinks(lang, r))
 			self.dataRepository.disconnect()
 
-		for lang in langs:
-			self.log.info('Importing pagelinks from ' + lang)
-			self.dataRepository.connect()
-			self.dataSource.importTable(lang, 'pagelinks', lambda r : self.processPagelinks(lang, r))
-			self.dataRepository.disconnect()
+#		for lang in langs:
+#			self.log.info('Importing pagelinks from ' + lang)
+#			self.dataRepository.connect()
+#			self.dataSource.importTable(lang, 'pagelinks', lambda r : self.processPagelinks(lang, r))
+#			self.dataRepository.disconnect()
 
 		if self.memProfile:
 			code.interact(local = {'hp': hp})

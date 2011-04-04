@@ -28,6 +28,9 @@ LANGUAGES="en de fr pl ja it nl pt es ru sv zh no fi ca uk tr cs hu ro vo eo da 
 # All editions as of 2010-09-28
 LANGUAGES="en de fr pl it ja es nl pt ru sv zh ca no fi uk hu cs ro tr ko da ar eo id vi sr vo lt sk he bg fa sl war hr et ms new simple gl th roa_rup nn eu hi el ht te la ka mk ceb az tl br sh mr lb jv lv bs is cy pms be_x_old sq bpy ta be an oc bn sw io ksh fy gu lmo nds af scn qu ku ur su zh_yue ml ast nap bat_smg wa ga cv hy yo kn tg roa_tara vec pnb gd yi zh_min_nan uz pam tt os ne sah als mi kk arz nah li hsb glk co gan ia am mn bcl fiu_vro nds_nl fo tk vls si sa bar sco gv dv nrm pag rm my map_bms diq ckb se wuu mzn ug fur lij mt bh nov mg csb sc ilo zh_classical km lad pi ang cbk_zam bo frp hif hak pa kw ps xal pdc szl haw ie stq crh fj kv to ace so nv myv gn krc ln ky ext mhr arc jbo eml wo ay pcd kab ty tpi frr ba pap zea srn kl udm ce ig or dsb kg lo ab rmy cu mwl mdf kaa sm mo av tet sn ks got sd na bm pih pnt iu chr ik as bi cdo ee ss om za bug ti ts ve zu ha dz sg ch cr ak xh rw tn ki bxr ny lbe st tw rn chy ff tum lg ng ii cho mh aa kj ho mus kr hz"
 
+# All editions as of 2011-04-01
+LANGUAGES="en de fr pl it es ja ru nl pt sv zh ca no uk fi vi cs hu ko id ro tr da ar eo sr lt sk fa vo ms he bg sl war hr hi et gl new simple th eu nn roa_rup el az ht la tl ka te mk ceb sh pms br be_x_old lv mr jv lb cy sq bs is ta be an bpy oc bn io sw lmo fy gu ml af nds scn ur qu ku zh_yue su ast hy nap yo bat_smg ne cv ga wa pnb kn tg kk roa_tara vec tt yi als zh_min_nan gd os uz pam sah arz bug am mi li hsb nah sco gan co glk mn my ia bcl fo fiu_vro si nds_nl vls tk sa bar mg gv ilo map_bms dv nrm pag ckb diq rm se mzn wuu fur ug lij mt bo bh hif ang nov csb lad sc zh_classical km cbk_zam pi ps frp hak mrj kw ksh rue nv pa szl xal rw haw pdc stq ie so udm mhr kv to ln krc crh pcd ace ky ext myv gn ce eml ba arc pap ay bjn jbo kl wo frr tpi kab ty srn zea gag ab dsb koi or lo ig av kg tet mdf mwl lbe rmy cu ltg kaa sm mo kbd got ks bm ik sd bi pfl as na pih iu pnt ss cdo chr ha ee ti bxr zu om za ve ts rn sg dz cr ch lg fj ny tum st ak xh ff tn ki sn tw chy ng ii cho mh aa kj ho mus kr hz"
+
 function error {
   echo "Please install curl and wget before running this script"
   exit 1
@@ -44,7 +47,7 @@ fi
 function get {
   lg=$1
   tab=$2
-  tmp=`curl http://download.wikimedia.org/${lg}wiki/latest/${lg}wiki-latest-${tab}-rss.xml 2> /dev/null | grep 'href' | sed 's/^[^"]*"//;s/".*$//'`
+  tmp=`curl http://dumps.wikimedia.org/${lg}wiki/latest/${lg}wiki-latest-${tab}-rss.xml 2> /dev/null | grep 'href' | sed 's/^[^"]*"//;s/".*$//'`
   if [ X$tmp == X ]
   then
     echo "WARNING: Cannot download: " $lg $tab
