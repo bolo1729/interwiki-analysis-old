@@ -49,7 +49,7 @@ class PostgresqlRepository:
 		import psycopg2
 
 		self.conn = psycopg2.connect(**args)
-		self.cursor = self.conn.cursor()
+		self.cursor = self.conn.cursor('generalpurpose')
 
 	def disconnect(self):
 		self.cursor.close()
@@ -64,7 +64,7 @@ class PostgresqlRepository:
 		self.acCounter = 0
 		self.cursor.close()
 		self.conn.commit()
-		self.cursor = self.conn.cursor()
+		self.cursor = self.conn.cursor('generalpurpose')
 
 	def getPageKey(self, lang, namespace, title):
 		if self.cache:
@@ -158,19 +158,25 @@ class PostgresqlRepository:
 		self.checkAutoCommit()
 
 	def getAllPageKeys(self):
-		self.cursor.execute('SELECT key FROM network_page')
-		rows = self.cursor.fetchall()
-		return map(lambda r: r[0], rows)
+		cursor = self.conn.cursor('allpagekeys')
+		cursor.execute('SELECT key FROM network_page')
+		for row in cursor:
+			yield row[0]
+		cursor.close()
 
 	def getAllRedirects(self):
-		self.cursor.execute('SELECT key, redirect_id FROM network_page WHERE redirect_id IS NOT NULL')
-		rows = self.cursor.fetchall()
-		return rows
+		cursor = self.conn.cursor('allredirects')
+		cursor.execute('SELECT key, redirect_id FROM network_page WHERE redirect_id IS NOT NULL')
+		for row in cursor:
+			yield row
+		cursor.close()
 
 	def getAllLangLinks(self):
-		self.cursor.execute('SELECT src_id, dst_id FROM network_langlink')
-		rows = self.cursor.fetchall()
-		return rows
+		cursor = self.conn.cursor('alllanglinks')
+		cursor.execute('SELECT src_id, dst_id FROM network_langlink')
+		for row in cursor:
+			yield row
+		cursor.close()
 
 	def saveComponent(self, compKey, pageKeys, coherent, size):
 		namespace = int(self.getPage(pageKeys[0])['namespace'])
