@@ -169,11 +169,6 @@ class Importer:
 			self.dataSource.importTable(lang, 'langlinks', lambda r : self.processLanglinks(lang, r))
 			self.dataRepository.disconnect()
 
-		self.log.info('Finding connected components')
-		self.dataRepository.connect()
-		self.dataRepository.findConnectedComponents()
-		self.dataRepository.disconnect()
-
 		for lang in langs:
 			self.log.info('Importing categorylinks from ' + lang)
 			self.dataRepository.connect()

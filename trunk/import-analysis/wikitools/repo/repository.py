@@ -157,6 +157,30 @@ class PostgresqlRepository:
 		self.cursor.execute('INSERT INTO network_langlink (src_id, dst_id) VALUES (%s, %s)', (fromKey, toKey))
 		self.checkAutoCommit()
 
+	def getAllPageKeys(self):
+		self.cursor.execute('SELECT key FROM network_page')
+		rows = self.cursor.fetchall()
+		return map(lambda r: r[0], rows)
+
+	def getAllRedirects(self):
+		self.cursor.execute('SELECT key, redirect_id FROM network_page WHERE redirect_id IS NOT NULL')
+		rows = self.cursor.fetchall()
+		return rows
+
+	def getAllLangLinks(self):
+		self.cursor.execute('SELECT src_id, dst_id FROM network_langlink')
+		rows = self.cursor.fetchall()
+		return rows
+
+	def saveComponent(self, compKey, pageKeys, coherent, size):
+		namespace = int(self.getPage(pageKeys[0])['namespace'])
+		self.cursor.execute('INSERT INTO network_comp (key, namespace, coherent, size) VALUES (%s, %s, %s, %s)', (compKey, namespace, coherent, size))
+		self.log.debug('Component: %s (size: %d, coherent: %s)' % (compKey, size, str(coherent)))
+		for pageKey in pageKeys:
+			self.cursor.execute('UPDATE network_page SET comp_id = %s WHERE key = %s', (compKey, pageKey))
+			self.cursor.execute('UPDATE network_langlink SET comp_id = %s WHERE src_id = %s', (compKey, pageKey))
+			self.checkAutoCommit()
+
 	def findConnectedComponents(self):
 		while True:
 			self.cursor.execute('SELECT src_id FROM network_langlink WHERE comp_id IS NULL LIMIT 1')

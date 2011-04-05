@@ -419,6 +419,9 @@ class HashIntDict:
 		>>> dd[1] = 1
 		>>> 1 in dd
 		False
+		>>> dd[1] = -1
+		>>> 1 in dd
+		False
 
 		Examples for a dictionary with CHK_SHOUTING:
 		>>> ds = HashIntDict({0: 0, 1: -1, 8: -2}, HashIntDict.CHK_SHOUTING)

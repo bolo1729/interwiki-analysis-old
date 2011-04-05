@@ -67,6 +67,8 @@ class Analysis:
 		for command in self.opts.commands:
 			if command == 'import':
 				self.execImport()
+			if command == 'find-comps':
+				self.execFindComps()
 			if command == 'positions':
 				self.execPositions()
 			if command == 'cliques':
@@ -103,6 +105,12 @@ class Analysis:
 			for compKey in self.opts.components:
 				engine.processComponent(compKey)
 		pass
+
+	def execFindComps(self):
+		import wikitools.compfinder, wikitools.repo.repository
+		dataRepository = wikitools.repo.repository.PostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password, cache = False)
+		compFinder = wikitools.compfinder.ComponentFinder(dataRepository)
+		compFinder.doFindComponents()
 
 	def execImport(self):
 		import wikitools.importer, wikitools.repo.bigmemory, wikitools.repo.repository
