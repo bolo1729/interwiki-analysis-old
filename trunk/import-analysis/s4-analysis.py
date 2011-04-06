@@ -107,9 +107,9 @@ class Analysis:
 		pass
 
 	def execFindComps(self):
-		import wikitools.compfinder, wikitools.repo.repository
+		import wikitools.compfinder2, wikitools.repo.repository
 		dataRepository = wikitools.repo.repository.PostgresqlRepository(host = self.opts.host, port = self.opts.port, database = self.opts.database, user = self.opts.user, password = self.opts.password, cache = False)
-		compFinder = wikitools.compfinder.ComponentFinder(dataRepository)
+		compFinder = wikitools.compfinder2.ComponentFinder(dataRepository)
 		compFinder.doFindComponents()
 
 	def execImport(self):
