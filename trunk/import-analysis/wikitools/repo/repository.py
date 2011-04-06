@@ -49,7 +49,7 @@ class PostgresqlRepository:
 		import psycopg2
 
 		self.conn = psycopg2.connect(**args)
-		self.cursor = self.conn.cursor('generalpurpose')
+		self.cursor = self.conn.cursor()
 
 	def disconnect(self):
 		self.cursor.close()
@@ -64,7 +64,7 @@ class PostgresqlRepository:
 		self.acCounter = 0
 		self.cursor.close()
 		self.conn.commit()
-		self.cursor = self.conn.cursor('generalpurpose')
+		self.cursor = self.conn.cursor()
 
 	def getPageKey(self, lang, namespace, title):
 		if self.cache:
