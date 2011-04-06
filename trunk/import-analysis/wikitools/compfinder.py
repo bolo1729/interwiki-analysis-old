@@ -17,12 +17,9 @@
 import array, bisect, logging, uuid
 
 class PageIndex:
-	NAMESPACES = range(1024)
-
 	def __init__(self):
 		self.log = logging.getLogger('PageIndex')
 		self.pageKeys = {}
-		self.pageNamespaces = {}
 
 	def addPage(self, key):
 		lang, id = key.split(':')
